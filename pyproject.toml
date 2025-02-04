@@ -30,6 +30,9 @@ dependencies = [
     "ir_datasets",
     "beir",
     "haystack-ai>=2.9.0",
+    "pymilvus",
+    "milvus-haystack",
+    "instructor-embedders-haystack",
     "weave",
     "pytrec_eval",
 ]
@@ -47,7 +50,12 @@ packages = ["src/rankers"]
 
 [tool.hatch.envs.default]
 installer = "uv"
-dependencies = ["coverage[toml]>=6.5", "pytest", "pytest-rerunfailures"]
+dependencies = [
+    "coverage[toml]>=6.5",
+    "pytest",
+    "pytest-rerunfailures",
+    "pytest-mock",
+]
 
 [tool.hatch.envs.default.scripts]
 test = "pytest {args:tests}"
