@@ -35,6 +35,7 @@ dependencies = [
     "instructor-embedders-haystack",
     "weave",
     "pytrec_eval",
+    "outlines[transformers]",
 ]
 
 [project.optional-dependencies]
@@ -148,6 +149,9 @@ ignore = [
     "B008",
     # Ignore Assertion
     "S101",
+    # Allow unused arguments
+    "ARG002",
+    "ARG003",
     # Allow unused lambda arguments
     "ARG005",
 ]
