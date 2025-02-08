@@ -36,6 +36,7 @@ dependencies = [
     "weave",
     "pytrec_eval",
     "outlines[transformers]",
+    "rank-llm",
 ]
 
 [project.optional-dependencies]
