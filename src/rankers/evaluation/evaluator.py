@@ -107,9 +107,7 @@ class Evaluator:
             logger.warning("No common queries between relevance judgments and run results.")
 
     def _filter_identical_ids(self) -> None:
-        """Filter out query-document pairs where the query ID is identical to the document ID,
-        if configured to do so.
-        """
+        """Filter out query-document pairs where the query ID is identical to the document ID."""
         if not self.config.ignore_identical_ids:
             return
 
@@ -124,7 +122,7 @@ class Evaluator:
         self.run_results = filtered_results
 
         if removed_pairs_count > 0:
-            logger.info("Removed %d query-document pairs with identical IDs.", removed_pairs_count)
+            logger.info(f"Removed {removed_pairs_count} query-document pairs with identical IDs.")
 
     def _compute_base_metrics(self) -> dict[str, dict[str, float]]:
         """Compute base evaluation metrics using pytrec_eval.

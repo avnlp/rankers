@@ -18,6 +18,7 @@ class EvaluatorConfig:
     metrics_to_compute: tuple[str, ...] = ("ndcg", "map", "recall", "precision")
 
     def __post_init__(self) -> None:
+        """Validate evaluation parameters."""
         # Validate cutoff_values: non-empty and each value must be a positive integer.
         if not self.cutoff_values or not isinstance(self.cutoff_values, tuple):
             msg = "cutoff_values must be a non-empty tuple of positive integers."
