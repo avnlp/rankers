@@ -1,6 +1,7 @@
 import copy
 from typing import Optional
 
+import weave
 from haystack import Document, component
 from transformers import PreTrainedModel, PreTrainedTokenizer
 
@@ -212,6 +213,7 @@ class SetwiseLLMRanker:
 
         return result
 
+    @weave.op
     @component.output_types(documents=list[Document])
     def run(
         self,
