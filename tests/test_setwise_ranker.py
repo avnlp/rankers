@@ -46,6 +46,7 @@ def patch_structured_generation() -> None:
 
 class TestSetwiseLLMRanker:
     """Tests for the SetwiseLLMRanker class."""
+
     @pytest.fixture
     def test_documents(self) -> list[Document]:
         """Fixture providing a list of test documents.
