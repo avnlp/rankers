@@ -144,23 +144,29 @@ class ListwiseLLMRanker:
             msg = "No documents provided for reranking"
             raise ValueError(msg)
 
-        doc_id_to_doc = {doc.id: doc for doc in documents}
-        request = Request(
+        document_id_to_document_map = {document.id: document for document in documents}
+        rerank_request = Request(
             query=Query(query, qid=1),
-            candidates=[Candidate(doc={"text": doc.content}, docid=doc.id, score=1) for doc in documents],
+            candidates=[
+                Candidate(doc={"text": document.content}, docid=document.id, score=1) for document in documents
+            ],
         )
 
         rerank_results = self.reranker.rerank(
-            request=request, rank_end=len(documents), step=self.sliding_window_step, top_k_retrieve=top_k
+            request=rerank_request, rank_end=len(documents), step=self.sliding_window_step
         )
+        reranked_candidates = rerank_results[0].candidates
 
-        results = []
-        for result in rerank_results:
-            if doc := doc_id_to_doc.get(result.docid):
-                doc_copy = Document(content=doc.content, meta=deepcopy(doc.meta))
-                results.append(doc_copy)
+        final_results = []
+        for candidate in reranked_candidates:
+            original_document = document_id_to_document_map.get(candidate.docid)
+            if original_document:
+                document_copy = Document(
+                    content=original_document.content, meta=deepcopy(original_document.meta), score=candidate.score
+                )
+                final_results.append(document_copy)
 
         if top_k:
-            results = results[:top_k]
+            final_results = final_results[:top_k]
 
-        return {"documents": results}
+        return {"documents": final_results}
