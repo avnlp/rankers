@@ -1,4 +1,4 @@
-# Based on the implementation from https://github.com/beir-cellar/beir/blob/main/beir/retrieval/evaluation.py
+# This implementation is based on the Retrieval Evaluation from https://github.com/beir-cellar/beir/blob/main/beir/retrieval/evaluation.py
 
 import copy
 import logging
