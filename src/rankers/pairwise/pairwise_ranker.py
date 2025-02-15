@@ -1,3 +1,5 @@
+# This implementation is based on the Pairwise Ranker from https://github.com/ielab/llm-rankers/blob/main/llmrankers/pairwise.py
+
 from collections import defaultdict
 from copy import deepcopy
 from itertools import combinations
@@ -28,8 +30,6 @@ class PairwiseLLMRanker:
         tokenizer_class: The class of the tokenizer to use (optional).
         method: The ranking method to use (one of 'allpair', 'heapsort', 'bubblesort').
         top_k: The number of top documents to return.
-        _generator: The StructuredGeneration instance used for generation.
-        _is_warmed_up: A flag indicating whether the generator is initialized.
     """
 
     def __init__(
