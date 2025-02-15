@@ -1,3 +1,5 @@
+# This implementation is based on the Setwise Ranker from https://github.com/ielab/llm-rankers/blob/main/llmrankers/setwise.py
+
 import copy
 from typing import Optional
 
