@@ -1,0 +1,8 @@
+python src/rankers/pipelines/indexing.py \
+    --dataset_name "beir/nfcorpus/test" \
+    --embedder_model "hkunlp/instructor-xl" \
+    --document_embedding_instruction "Represent these medical documents for retrieval:" \
+    --embedder_kwargs "{'device': 'cuda', 'normalize_embeddings': True}" \
+    --milvus_connection_uri "MILVUS_URI" \
+    --milvus_connection_token "MILVUS_TOKEN" \
+    --milvus_document_store_kwargs "{'collection_name': 'nfcorpus-test'}"

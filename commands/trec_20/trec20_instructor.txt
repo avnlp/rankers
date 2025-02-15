@@ -1,0 +1,13 @@
+python src/rankers/pipelines/instructor_retrieval.py \
+    --dataset_name "msmarco-document-v2/trec-dl-2020" \
+    --embedder_model "hkunlp/instructor-xl" \
+    --embedder_kwargs "{'device': 'cuda', 'normalize_embeddings': True}" \
+    --query_embedding_instruction "Represent this question for retrieval:" \
+    --milvus_connection_uri "MILVUS_URI" \
+    --milvus_connection_token "MILVUS_TOKEN" \
+    --milvus_document_store_kwargs "{'collection_name': 'trec20-test'}" \
+    --documents_to_retrieve 50 \
+    --cutoff_values 1 3 5 10 \
+    --ignore_identical_ids \
+    --decimal_precision 4 \
+    --metrics_to_compute ndcg map recall precision
