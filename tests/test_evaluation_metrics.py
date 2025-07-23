@@ -1,6 +1,8 @@
 import pytest
 
-from rankers.evaluation.evaluator import EvaluationMetrics, Evaluator, EvaluatorConfig
+from rankers.evaluation.evaluation_metrics import EvaluationMetrics
+from rankers.evaluation.evaluator import Evaluator
+from rankers.evaluation.evaluator_params import EvaluatorParams
 
 
 class TestEvaluationMetrics:
@@ -47,7 +49,7 @@ class TestEvaluationMetrics:
 
         # Create evaluator with default configuration
         evaluator = Evaluator(
-            {"q1": {}}, {"q1": {}}, EvaluatorConfig(metrics_to_compute=("ndcg", "map"), cutoff_values=(5,))
+            {"q1": {}}, {"q1": {}}, EvaluatorParams(metrics_to_compute=("ndcg", "map"), cutoff_values=(5,))
         )
 
         # Compute average metrics

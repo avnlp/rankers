@@ -1,18 +1,18 @@
 import pytest
 
-from rankers.evaluation.evaluator import EvaluatorConfig
+from rankers.evaluation.evaluator_params import EvaluatorParams
 
 
-class TestEvaluationConfig:
-    """Test suite for the EvaluatorConfig class, ensuring correct initialization and validation."""
+class TestEvaluatorParams:
+    """Test suite for the EvaluatorParams class, ensuring correct initialization and validation."""
 
     def test_valid_config_initialization(self):
-        """Test that EvaluatorConfig correctly initializes with custom configuration values.
+        """Test that EvaluatorParams correctly initializes with custom configuration values.
 
         Verifies that all configuration parameters are correctly set during initialization
         and can be retrieved with the exact values provided.
         """
-        config = EvaluatorConfig(
+        config = EvaluatorParams(
             cutoff_values=(1, 3, 5, 10),
             ignore_identical_ids=True,
             decimal_precision=4,
@@ -26,34 +26,34 @@ class TestEvaluationConfig:
         assert config.metrics_to_compute == ("ndcg", "map", "recall", "precision")
 
     def test_invalid_cutoff_values_raises_error(self):
-        """Test that EvaluatorConfig raises a ValueError for invalid cutoff values.
+        """Test that EvaluatorParams raises a ValueError for invalid cutoff values.
 
         Ensures that negative or zero cutoff values are not allowed,
         maintaining the integrity of metric computation.
         """
         with pytest.raises(ValueError):
-            EvaluatorConfig(cutoff_values=(-1, 2))
+            EvaluatorParams(cutoff_values=(-1, 2))
 
     def test_invalid_decimal_precision_raises_error(self):
-        """Test that EvaluatorConfig raises a ValueError for invalid decimal precision.
+        """Test that EvaluatorParams raises a ValueError for invalid decimal precision.
 
         Verifies that only integer values are accepted for decimal precision,
         preventing potential rounding issues.
         """
         with pytest.raises(ValueError):
-            EvaluatorConfig(decimal_precision=0.5)
+            EvaluatorParams(decimal_precision=0.5)
 
     def test_invalid_metrics_raises_error(self):
-        """Test that EvaluatorConfig raises a ValueError for unsupported metrics.
+        """Test that EvaluatorParams raises a ValueError for unsupported metrics.
 
         Ensures that only predefined, valid metrics can be specified during configuration,
         preventing potential errors during evaluation.
         """
         with pytest.raises(ValueError):
-            EvaluatorConfig(metrics_to_compute=("invalid_metric",))
+            EvaluatorParams(metrics_to_compute=("invalid_metric",))
 
     def test_default_config_values(self):
-        """Test that EvaluatorConfig provides sensible default values when no parameters are specified.
+        """Test that EvaluatorParams provides sensible default values when no parameters are specified.
 
         Verifies that:
         - Cutoff values are not empty
@@ -61,7 +61,7 @@ class TestEvaluationConfig:
         - Decimal precision is an integer
         - Metrics to compute are not empty
         """
-        config = EvaluatorConfig()
+        config = EvaluatorParams()
 
         # Verify default configuration parameters
         assert len(config.cutoff_values) > 0

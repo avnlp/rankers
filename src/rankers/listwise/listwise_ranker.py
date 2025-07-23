@@ -1,5 +1,5 @@
 from copy import deepcopy
-from typing import Literal, Optional
+from typing import Literal
 
 import weave
 from haystack import Document, component
@@ -38,12 +38,12 @@ class ListwiseLLMRanker:
         sliding_window_size: int = 20,
         sliding_window_step: int = 10,
         system_message: str = "You are RankLLM, an intelligent assistant that can rank passages based on their relevancy to the query",
-        openai_api_keys: Optional[list[str]] = None,
-        openai_key_start_id: Optional[int] = None,
-        openai_proxy: Optional[str] = None,
-        api_type: Optional[str] = None,
-        api_base: Optional[str] = None,
-        api_version: Optional[str] = None,
+        openai_api_keys: list[str] | None = None,
+        openai_key_start_id: int | None = None,
+        openai_proxy: str | None = None,
+        api_type: str | None = None,
+        api_base: str | None = None,
+        api_version: str | None = None,
     ):
         """Initialize the ListwiseLLMRanker component with the specified parameters.
 
@@ -126,7 +126,7 @@ class ListwiseLLMRanker:
 
     @weave.op()
     @component.output_types(documents=list[Document])
-    def run(self, query: str, documents: list[Document], top_k: Optional[int] = None) -> dict:
+    def run(self, query: str, documents: list[Document], top_k: int | None = None) -> dict:
         """Rerank documents based on query relevance using the configured LLM.
 
         Args:
@@ -155,10 +155,9 @@ class ListwiseLLMRanker:
         rerank_results = self.reranker.rerank(
             request=rerank_request, rank_end=len(documents), step=self.sliding_window_step
         )
-        reranked_candidates = rerank_results[0].candidates
 
         final_results = []
-        for candidate in reranked_candidates:
+        for candidate in rerank_results:
             original_document = document_id_to_document_map.get(candidate.docid)
             if original_document:
                 document_copy = Document(

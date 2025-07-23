@@ -1,7 +1,6 @@
 # This implementation is based on the Setwise Ranker from https://github.com/ielab/llm-rankers/blob/main/llmrankers/setwise.py
 
 import copy
-from typing import Optional
 
 import weave
 from haystack import Document, component
@@ -34,11 +33,11 @@ class SetwiseLLMRanker:
     def __init__(
         self,
         model_name: str,
-        device: Optional[str] = None,
-        model_kwargs: Optional[dict] = None,
-        tokenizer_kwargs: Optional[dict] = None,
-        model_class: Optional[type[PreTrainedModel]] = None,
-        tokenizer_class: Optional[type[PreTrainedTokenizer]] = None,
+        device: str | None = None,
+        model_kwargs: dict | None = None,
+        tokenizer_kwargs: dict | None = None,
+        model_class: type[PreTrainedModel] | None = None,
+        tokenizer_class: type[PreTrainedTokenizer] | None = None,
         method: str = "heapsort",
         num_permutation: int = 1,
         num_child: int = 3,
@@ -110,7 +109,7 @@ class SetwiseLLMRanker:
         # Only proceed if there are children for node i.
         if self.num_child * i + 1 < n:
             # Create a list containing the parent followed by all its children.
-            docs = [arr[i]] + arr[self.num_child * i + 1 : min(self.num_child * (i + 1) + 1, n)]
+            docs = [arr[i], *arr[self.num_child * i + 1 : min(self.num_child * (i + 1) + 1, n)]]
             # Maintain a corresponding list of indices.
             inds = [i, *list(range(self.num_child * i + 1, min(self.num_child * (i + 1) + 1, n)))]
             output = self.compare(query, docs)
@@ -221,10 +220,10 @@ class SetwiseLLMRanker:
         self,
         documents: list[Document],
         query: str,
-        top_k: Optional[int] = None,
-        num_permutation: Optional[int] = None,
-        num_child: Optional[int] = None,
-        method: Optional[str] = None,
+        top_k: int | None = None,
+        num_permutation: int | None = None,
+        num_child: int | None = None,
+        method: str | None = None,
     ) -> dict:
         """Rerank Haystack Document objects given a query using the Setwise ranking method.
 

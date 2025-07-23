@@ -3,7 +3,6 @@
 from collections import defaultdict
 from copy import deepcopy
 from itertools import combinations
-from typing import Optional
 
 import weave
 from haystack import Document, component
@@ -35,11 +34,11 @@ class PairwiseLLMRanker:
     def __init__(
         self,
         model_name: str,
-        device: Optional[str] = None,
-        model_kwargs: Optional[dict] = None,
-        tokenizer_kwargs: Optional[dict] = None,
-        model_class: Optional[type[PreTrainedModel]] = None,
-        tokenizer_class: Optional[type[PreTrainedTokenizer]] = None,
+        device: str | None = None,
+        model_kwargs: dict | None = None,
+        tokenizer_kwargs: dict | None = None,
+        model_class: type[PreTrainedModel] | None = None,
+        tokenizer_class: type[PreTrainedTokenizer] | None = None,
         method: str = "allpair",
         top_k: int = 10,
     ):
@@ -245,8 +244,8 @@ class PairwiseLLMRanker:
         self,
         documents: list[Document],
         query: str,
-        method: Optional[str] = None,
-        top_k: Optional[int] = None,
+        method: str | None = None,
+        top_k: int | None = None,
     ) -> dict[str, list[Document]]:
         """Execute the pairwise ranking using the specified method.
 

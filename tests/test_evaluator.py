@@ -3,7 +3,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from rankers.evaluation.evaluator import Evaluator, EvaluatorConfig
+from rankers.evaluation.evaluator import Evaluator
+from rankers.evaluation.evaluator_params import EvaluatorParams
 
 
 @pytest.fixture
@@ -28,12 +29,12 @@ def sample_run_results():
 
 @pytest.fixture
 def evaluator_config():
-    """Fixture creating a default EvaluatorConfig for testing.
+    """Fixture creating a default EvaluatorParams for testing.
 
     Returns:
-        EvaluatorConfig: A configuration object with predefined settings.
+        EvaluatorParams: A configuration object with predefined settings.
     """
-    return EvaluatorConfig(
+    return EvaluatorParams(
         cutoff_values=(1, 3, 5, 10),  # Specify different cutoff points for metrics
         ignore_identical_ids=True,  # Remove query-document pairs with identical IDs
         decimal_precision=4,  # Set precision for metric calculations
@@ -68,7 +69,7 @@ class TestEvaluator:
     def test_invalid_cutoff_values_raises_error(self):
         """Test that initializing Evaluator with invalid cutoff values (zero) raises a ValueError."""
         with pytest.raises(ValueError):
-            Evaluator({"q1": {"d1": 1}}, {"q1": {"d1": 1.0}}, EvaluatorConfig(cutoff_values=(0, 5)))
+            Evaluator({"q1": {"d1": 1}}, {"q1": {"d1": 1.0}}, EvaluatorParams(cutoff_values=(0, 5)))
 
     def test_warning_when_no_common_queries(self, caplog):
         """Test that a warning is logged when there are no common queries between relevance judgments and run results.
@@ -83,14 +84,14 @@ class TestEvaluator:
     def test_filter_identical_ids_enabled(self):
         """Test that identical IDs are removed when ignore_identical_ids is True."""
         run_results = {"q1": {"q1": 0.9, "d2": 0.8}, "q2": {"d3": 0.7}}
-        evaluator = Evaluator({"q1": {}, "q2": {}}, run_results, EvaluatorConfig(ignore_identical_ids=True))
+        evaluator = Evaluator({"q1": {}, "q2": {}}, run_results, EvaluatorParams(ignore_identical_ids=True))
         evaluator._filter_identical_ids()
         assert evaluator.run_results == {"q1": {"d2": 0.8}, "q2": {"d3": 0.7}}
 
     def test_filter_identical_ids_disabled(self):
         """Test that identical IDs are not removed when ignore_identical_ids is False."""
         run_results = {"q1": {"q1": 0.9, "d2": 0.8}}
-        evaluator = Evaluator({"q1": {}}, run_results, EvaluatorConfig(ignore_identical_ids=False))
+        evaluator = Evaluator({"q1": {}}, run_results, EvaluatorParams(ignore_identical_ids=False))
         evaluator._filter_identical_ids()
         assert evaluator.run_results == run_results
 
@@ -102,7 +103,7 @@ class TestEvaluator:
         """
         run_results = {"q1": {"q1": 0.9, "d2": 0.8}}
         with caplog.at_level(logging.INFO):
-            evaluator = Evaluator({"q1": {}}, run_results, EvaluatorConfig(ignore_identical_ids=True))
+            evaluator = Evaluator({"q1": {}}, run_results, EvaluatorParams(ignore_identical_ids=True))
             evaluator.evaluate()
         assert "Removed 1 query-document pairs" in caplog.text
 
@@ -117,20 +118,20 @@ class TestEvaluator:
         mock_evaluator.evaluate.return_value = {"q1": {"ndcg_cut_5": 0.5}}
         monkeypatch.setattr("rankers.evaluation.evaluator.RelevanceEvaluator", lambda *args, **kwargs: mock_evaluator)
 
-        evaluator = Evaluator({"q1": {}}, {"q1": {}}, EvaluatorConfig(metrics_to_compute=("ndcg",), cutoff_values=(5,)))
+        evaluator = Evaluator({"q1": {}}, {"q1": {}}, EvaluatorParams(metrics_to_compute=("ndcg",), cutoff_values=(5,)))
         raw_scores = evaluator._compute_base_metrics()
         assert raw_scores == {"q1": {"ndcg_cut_5": 0.5}}
 
     def test_compute_base_metrics_with_invalid_metric_raises_error(self):
         """Test that specifying an invalid metric raises a ValueError."""
         with pytest.raises(ValueError):
-            Evaluator({"q1": {}}, {"q1": {}}, EvaluatorConfig(metrics_to_compute=("invalid",)))
+            Evaluator({"q1": {}}, {"q1": {}}, EvaluatorParams(metrics_to_compute=("invalid",)))
 
     def test_compute_average_metrics(self):
         """Test computation of average metrics across queries."""
         raw_scores = {"q1": {"ndcg_cut_5": 0.5, "map_cut_5": 0.6}, "q2": {"ndcg_cut_5": 0.7, "map_cut_5": 0.8}}
         evaluator = Evaluator(
-            {"q1": {}}, {"q1": {}}, EvaluatorConfig(metrics_to_compute=("ndcg", "map"), cutoff_values=(5,))
+            {"q1": {}}, {"q1": {}}, EvaluatorParams(metrics_to_compute=("ndcg", "map"), cutoff_values=(5,))
         )
 
         averaged = evaluator._compute_average_metrics(raw_scores)
@@ -141,7 +142,7 @@ class TestEvaluator:
         """Test computation of average metrics when some queries have missing data."""
         raw_scores = {"q1": {"ndcg_cut_5": 0.5}, "q2": {}}
         evaluator = Evaluator(
-            {"q1": {}}, {"q1": {}}, EvaluatorConfig(metrics_to_compute=("ndcg", "map"), cutoff_values=(5,))
+            {"q1": {}}, {"q1": {}}, EvaluatorParams(metrics_to_compute=("ndcg", "map"), cutoff_values=(5,))
         )
 
         averaged = evaluator._compute_average_metrics(raw_scores)
@@ -153,7 +154,7 @@ class TestEvaluator:
         Args:
             caplog: pytest fixture for capturing log messages.
         """
-        evaluator = Evaluator({"q1": {}}, {"q1": {}}, EvaluatorConfig(metrics_to_compute=("ndcg",), cutoff_values=(5,)))
+        evaluator = Evaluator({"q1": {}}, {"q1": {}}, EvaluatorParams(metrics_to_compute=("ndcg",), cutoff_values=(5,)))
         averaged = evaluator._compute_average_metrics({})
         assert "No valid queries" in caplog.text
         assert averaged["ndcg"]["NDCG@5"] == 0.0
@@ -178,7 +179,7 @@ class TestEvaluator:
         evaluator = Evaluator(
             sample_relevance_judgments,
             sample_run_results,
-            EvaluatorConfig(cutoff_values=(1,), metrics_to_compute=("ndcg", "map", "recall", "precision")),
+            EvaluatorParams(cutoff_values=(1,), metrics_to_compute=("ndcg", "map", "recall", "precision")),
         )
         metrics = evaluator.evaluate()
 

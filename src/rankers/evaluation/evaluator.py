@@ -1,14 +1,14 @@
 # This implementation is based on the Retrieval Evaluation from https://github.com/beir-cellar/beir/blob/main/beir/retrieval/evaluation.py
+# The code has been restructured with extensive Pydantic validation and error handling for metric edge cases.
 
 import copy
 import logging
 from dataclasses import asdict
-from typing import Optional
 
 from pytrec_eval import RelevanceEvaluator
 
 from rankers.evaluation.evaluation_metrics import EvaluationMetrics
-from rankers.evaluation.evaluator_config import EvaluatorConfig
+from rankers.evaluation.evaluator_params import EvaluatorParams
 
 # Set up logging
 logger = logging.getLogger(__name__)
@@ -24,32 +24,32 @@ class Evaluator:
     Attributes:
         relevance_judgments (Dict[str, Dict[str, int]]): The ground truth relevance judgments.
         run_results (Dict[str, Dict[str, float]]): The results produced by an IR system.
-        config (EvaluatorConfig): Configuration for evaluation.
-        _evaluation_metrics (Optional[EvaluationMetrics]): Cached evaluation metrics after computation.
+        config (EvaluatorParams): Configuration for evaluation.
+        _evaluation_metrics (EvaluationMetrics): Cached evaluation metrics after computation.
     """
 
     def __init__(
         self,
         relevance_judgments: dict[str, dict[str, int]],
         run_results: dict[str, dict[str, float]],
-        config: Optional[EvaluatorConfig] = None,
+        config: EvaluatorParams | None = None,
     ) -> None:
         """Initialize the evaluator with relevance judgments, system results, and configuration.
 
         Args:
             relevance_judgments (Dict[str, Dict[str, int]]): Ground truth relevance judgments.
             run_results (Dict[str, Dict[str, float]]): System run results with scores.
-            config (Optional[EvaluatorConfig]): Configuration for evaluation. Defaults to EvaluatorConfig() if None.
+            config (Optional[EvaluatorParams]): Configuration for evaluation. Defaults to EvaluatorParams() if None.
 
         Raises:
             ValueError: If input data is invalid.
         """
-        self.config = config if config is not None else EvaluatorConfig()
+        self.config = config if config is not None else EvaluatorParams()
         self._validate_input_data(relevance_judgments, run_results, self.config.cutoff_values)
 
         self.relevance_judgments: dict[str, dict[str, int]] = copy.deepcopy(relevance_judgments)
         self.run_results: dict[str, dict[str, float]] = copy.deepcopy(run_results)
-        self._evaluation_metrics: Optional[EvaluationMetrics] = None
+        self._evaluation_metrics: EvaluationMetrics | None = None
 
         logger.debug(
             "Initialized Evaluator with %d queries and %d relevance judgments",

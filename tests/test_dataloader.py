@@ -15,7 +15,7 @@ def mock_ir_dataset():
     Yields:
         MagicMock: A mock dataset with iterable methods for documents, queries, and relevance judgments.
     """
-    with patch("ir_datasets.load") as mock_load_function:
+    with patch("rankers.dataloader.dataloader.load_dataset") as mock_load_function:
         mock_dataset_instance = MagicMock()
         mock_load_function.return_value = mock_dataset_instance
         yield mock_dataset_instance
@@ -63,7 +63,7 @@ class TestDataset:
         Args:
             dataset_name (str): The name of the dataset that does not exist.
         """
-        with patch("ir_datasets.load", side_effect=ValueError("Dataset not found")):
+        with patch("rankers.dataloader.dataloader.load_dataset", side_effect=ValueError("Dataset not found")):
             with pytest.raises(ValueError, match="Dataset not found"):
                 Dataloader(dataset_name).load()
 

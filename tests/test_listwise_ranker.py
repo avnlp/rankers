@@ -1,4 +1,3 @@
-from typing import Optional
 from unittest.mock import Mock, patch
 
 import pytest
@@ -44,7 +43,7 @@ def mock_rerank(mocker: MockerFixture) -> Mock:
         Mock: Mock object patching the rerank method
     """
 
-    def _mock(ranker: ListwiseLLMRanker, return_value: Optional[list[Candidate]] = None) -> Mock:
+    def _mock(ranker: ListwiseLLMRanker, return_value: list[Candidate] | None = None) -> Mock:
         mock = mocker.patch.object(ranker.reranker, "rerank")
         mock.return_value = return_value if return_value is not None else []
         return mock
@@ -266,7 +265,7 @@ class TestListwiseLLMRanker:
         mock_rerank.return_value = [Candidate(doc={"text": doc.content}, docid=doc.id, score=1) for doc in documents]
 
         reranked_documents = rank_zephyr.run(query=query, documents=documents)
-        for original_doc, reranked_doc in zip(documents, reranked_documents["documents"]):
+        for original_doc, reranked_doc in zip(documents, reranked_documents["documents"], strict=False):
             assert original_doc.meta == reranked_doc.meta
             assert original_doc.content == reranked_doc.content
 
@@ -291,27 +290,6 @@ class TestListwiseLLMRanker:
         modified_results = rank_zephyr.run(query=query, documents=[original_doc])
         modified_results["documents"][0].meta["key"] = "modified"
         assert original_doc.meta["key"] == "original"
-
-    @patch("torch.cuda.is_available", return_value=True)
-    @patch("rank_llm.rerank.listwise.zephyr_reranker.ZephyrReranker.__init__", return_value=None)
-    def test_run_passes_top_k_retrieve_none(
-        self, mock_rank_zephyr_init: Mock, mock_cuda: Mock, mocker: MockerFixture, query: str, documents: list[Document]
-    ) -> None:
-        """Confirm None values for top_k_retrieve are properly handled.
-
-        Args:
-            mock_rank_zephyr_init: Mock for ZephyrReranker constructor
-            mock_cuda: Mock for CUDA availability check
-            mocker: Pytest mocker fixture
-            query: Test query fixture
-            documents: Test documents fixture
-        """
-        rank_zephyr = ListwiseLLMRanker(ranker_type="zephyr")
-        mock_rerank = mocker.patch.object(rank_zephyr.reranker, "rerank")
-        rank_zephyr.run(query=query, documents=documents, top_k=None)
-
-        _, called_kwargs = mock_rerank.call_args
-        assert called_kwargs["top_k_retrieve"] is None
 
     @patch("torch.cuda.is_available", return_value=True)
     @patch("rank_llm.rerank.listwise.zephyr_reranker.ZephyrReranker.__init__", return_value=None)

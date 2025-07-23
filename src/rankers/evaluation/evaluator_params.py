@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class EvaluatorConfig:
+class EvaluatorParams:
     """Configuration for evaluation parameters.
 
     Attributes:

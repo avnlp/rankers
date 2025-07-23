@@ -1,5 +1,3 @@
-from typing import Optional
-
 from outlines import generate, models
 from pydantic import BaseModel
 from transformers import AutoTokenizer, PreTrainedModel, PreTrainedTokenizer
@@ -23,11 +21,11 @@ class StructuredGeneration:
     def __init__(
         self,
         model_name: str,
-        device: Optional[str] = None,
-        model_kwargs: Optional[dict] = None,
-        tokenizer_kwargs: Optional[dict] = None,
-        model_class: Optional[type[PreTrainedModel]] = None,
-        tokenizer_class: Optional[type[PreTrainedTokenizer]] = None,
+        device: str | None = None,
+        model_kwargs: dict | None = None,
+        tokenizer_kwargs: dict | None = None,
+        model_class: type[PreTrainedModel] | None = None,
+        tokenizer_class: type[PreTrainedTokenizer] | None = None,
     ) -> None:
         """Initialize the StructuredGeneration with model and tokenizer configuration.
 
@@ -56,7 +54,7 @@ class StructuredGeneration:
             tokenizer_class=self.tokenizer_class,
         )
 
-    def _prepare_prompt(self, user_prompt: Optional[str], system_prompt: Optional[str]) -> str:
+    def _prepare_prompt(self, user_prompt: str | None, system_prompt: str | None) -> str:
         """Construct a formatted prompt using the tokenizer's chat template.
 
         Args:
@@ -90,8 +88,8 @@ class StructuredGeneration:
     def generate(
         self,
         output_format: type[BaseModel],
-        user_prompt: Optional[str] = None,
-        system_prompt: Optional[str] = None,
+        user_prompt: str | None = None,
+        system_prompt: str | None = None,
     ) -> BaseModel:
         """Generate structured output according to a specified schema.
 

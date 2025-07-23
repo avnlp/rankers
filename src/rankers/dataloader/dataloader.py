@@ -1,4 +1,4 @@
-import ir_datasets
+from ir_datasets import load as load_dataset
 
 from rankers.dataloader.dataset import Dataset
 
@@ -42,7 +42,7 @@ class Dataloader:
             >>> queries = dataset.queries
             >>> qrels = dataset.relevance_judgments
         """
-        dataset = ir_datasets.load(self.dataset_name)
+        dataset = load_dataset(self.dataset_name)
 
         # Load corpus: {doc_id: {'text': text}}
         document_corpus: dict[str, dict[str, str]] = {}

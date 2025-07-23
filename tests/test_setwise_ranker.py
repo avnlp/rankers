@@ -1,11 +1,11 @@
 import copy
-from typing import Optional
 from unittest.mock import Mock, patch
 
 import pytest
 from haystack import Document
 
-from rankers.setwise.setwise_ranker import SetwiseLLMRanker, SetwiseRankingOutput
+from rankers.setwise.setwise_ranker import SetwiseLLMRanker
+from rankers.setwise.setwise_ranker_output_validator import SetwiseRankingOutput
 
 
 class DummyStructuredGeneration:
@@ -15,9 +15,7 @@ class DummyStructuredGeneration:
         """Initialize the dummy model without loading any real model."""
         pass
 
-    def generate(
-        self, output_format: str, user_prompt: Optional[str] = None, system_prompt: Optional[str] = None
-    ) -> Mock:
+    def generate(self, output_format: str, user_prompt: str | None = None, system_prompt: str | None = None) -> Mock:
         """Generate a dummy output for testing.
 
         Args:

@@ -4,7 +4,8 @@ from unittest.mock import patch
 import pytest
 from haystack import Document
 
-from rankers.pairwise.pairwise_ranker import PairwiseLLMRanker, PairwiseRankingOutput
+from rankers.pairwise.pairwise_ranker import PairwiseLLMRanker
+from rankers.pairwise.pairwise_ranker_output_validator import PairwiseRankingOutput
 
 
 class DummyPairwiseGeneration:
