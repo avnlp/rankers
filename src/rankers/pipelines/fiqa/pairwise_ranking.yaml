@@ -1,0 +1,43 @@
+# Pairwise Ranking Pipeline Configuration
+
+# Dataset configuration
+dataset:
+  name: "beir/fiqa/test" 
+
+# LLM configuration
+llm:
+  model_name: "meta-llama/Llama-3.1-8B-Instruct" 
+  method: "allpair" 
+  top_k: 25 
+
+
+# Embedding configuration
+embedding:
+  model: "hkunlp/instructor-xl" 
+  model_kwargs:
+    device: "cuda" 
+    encode_kwargs:
+      prompt: "Represent these financial documents for retrieval:"
+
+# Milvus configuration
+milvus:
+  connection_uri: "MILVUS_URI" 
+  connection_token: "MILVUS_TOKEN" 
+  document_store_kwargs: 
+    collection_name: "fiqa"
+
+# Retrieval configuration
+retrieval:
+  filters: {} 
+  documents_to_retrieve: 50
+
+# Evaluation configuration
+evaluation:
+  cutoff_values: [1, 3, 5, 10] 
+  ignore_identical_ids: true 
+  decimal_precision: 4 
+  metrics_to_compute:
+    - "ndcg"
+    - "map"
+    - "recall"
+    - "precision"
