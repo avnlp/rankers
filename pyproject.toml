@@ -1,13 +1,13 @@
 [build-system]
-requires = ["hatchling", "hatch-vcs"]
-build-backend = "hatchling.build"
+requires = ["uv_build>=0.7.20,<0.8.0"]
+build-backend = "uv_build"
 
 [project]
 name = "rankers"
-version = "0.0.1"
+version = "0.1.0"
 description = 'LLM Rankers using Pointwise, Pairwise, Setwise and Listwise methods.'
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = "MIT"
 keywords = []
 authors = [
@@ -16,83 +16,39 @@ authors = [
 ]
 classifiers = [
     "License :: OSI Approved :: MIT License",
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: Implementation :: CPython",
-    "Programming Language :: Python :: Implementation :: PyPy",
 ]
 dependencies = [
-    "ir_datasets",
+    "ir-datasets==0.5.6",
     "beir",
-    "haystack-ai>=2.9.0",
+    "haystack-ai==2.14.2",
     "pymilvus",
     "milvus-haystack",
-    "instructor-embedders-haystack",
     "weave",
-    "pytrec_eval",
-    "outlines[transformers]",
-    "rank-llm",
+    "pytrec-eval-terrier",
+    "outlines[transformers]==0.1.14",
+    "rank-llm==0.21.0",
 ]
 
-[project.optional-dependencies]
-dev = ["pytest"]
-
-[project.urls]
-Documentation = "https://github.com/avnlp/rankers#readme"
-Issues = "https://github.com/avnlp/rankers/issues"
-Source = "https://github.com/avnlp/rankers"
-
-[tool.hatch.build.targets.wheel]
-packages = ["src/rankers"]
-
-[tool.hatch.envs.default]
-installer = "uv"
-dependencies = [
+[dependency-groups]
+dev = [
+    "black",
+    "mypy",
+    "ruff",
     "coverage[toml]>=6.5",
     "pytest",
     "pytest-rerunfailures",
     "pytest-mock",
 ]
 
-[tool.hatch.envs.default.scripts]
-test = "pytest {args:tests}"
-test-cov = "coverage run -m pytest {args:tests}"
-test-cov-retry = "test-cov --reruns 3 --reruns-delay 30 -x"
-cov-report = ["- coverage combine", "coverage report"]
-cov = ["test-cov", "cov-report"]
-cov-retry = ["test-cov-retry", "cov-report"]
 
-[[tool.hatch.envs.test.matrix]]
-python = ["39", "310", "311"]
-
-[tool.hatch.envs.lint]
-installer = "uv"
-detached = true
-dependencies = ["pip", "black>=23.1.0", "mypy>=1.0.0", "ruff>=0.0.243"]
-
-[tool.hatch.envs.lint.scripts]
-typing = "mypy --install-types --non-interactive --explicit-package-bases {args:src/ tests}"
-style = ["ruff check {args:}", "black --check --diff {args:.}"]
-fmt = ["black {args:.}", "ruff check --fix --unsafe-fixes {args:}", "style"]
-all = ["style", "typing"]
-
-[tool.coverage.run]
-source = ["rankers"]
-branch = true
-parallel = true
-
-[tool.coverage.report]
-omit = ["*/tests/*", "*/__init__.py"]
-show_missing = true
-exclude_lines = ["no cov", "if __name__ == .__main__.:", "if TYPE_CHECKING:"]
+[project.urls]
+Documentation = "https://github.com/avnlp/rankers#readme"
+Issues = "https://github.com/avnlp/rankers/issues"
+Source = "https://github.com/avnlp/rankers"
 
 [tool.ruff]
-target-version = "py39"
 line-length = 120
 
 [tool.ruff.lint]
@@ -125,6 +81,14 @@ select = [
     "YTT",
 ]
 ignore = [
+    # Allow unused kwargs in functions
+    "ARG001",
+    # Allow unused method argument, required for mocks
+    "ARG002",
+    # Allow unused class method argument, for pydantic validation
+    "ARG003", 
+    # Allow unused lambda arguments, for `kwargs`
+    "ARG005",
     # Allow non-abstract empty methods in abstract base classes
     "B027",
     # Allow boolean positional values in function calls, like `dict.get(... True)`
@@ -135,6 +99,7 @@ ignore = [
     "S107",
     # Ignore complexity
     "C901",
+    "PLR2004", # Allow Magic value used in comparison
     "PLR0911",
     "PLR0912",
     "PLR0913",
@@ -143,23 +108,16 @@ ignore = [
     "T201",
     # Ignore missing module docstrings
     "D100",
+    "D103",
     "D104",
     # Ignore Line too long
     "E501",
-    # Ignore Function call in argument defaults
-    "B008",
-    # Ignore Assertion
-    "S101",
-    # Allow unused arguments
-    "ARG002",
-    "ARG003",
-    # Allow unused lambda arguments
-    "ARG005",
 ]
 unfixable = [
     # Don't touch unused imports
     "F401",
 ]
+extend-select = ["I"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "google"
