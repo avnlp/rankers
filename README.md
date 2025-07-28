@@ -8,11 +8,11 @@ We release implementations for the three types of LLM based ranking techniques:
 
 - [Setwise Ranking](https://arxiv.org/abs/2310.09497)
 - [Pairwise Ranking](https://arxiv.org/abs/2306.17563)
-- [Listwise Ranking](https://arxiv.org/abs/2304.09542)
+- [Listwise Ranking](https://arxiv.org/pdf/2305.02156)
 
 Our implementation includes modular Pairwise, Setwise, and Listwise ranker components for the [Haystack](https://haystack.deepset.ai/) LLM framework. These rankers leverage structured generation and robust Pydantic validation to ensure accurate zero-shot ranking, even on smaller LLMs.
 
-Key Features:
+**Key Features**:
 
 - **Efficient Sorting Algorithms**: The Pairwise and Setwise rankers utilize efficient sorting methods (Heapsort and Bubblesort) to speed up inference.
 - **Sliding Window Technique**: The Listwise ranker uses a sliding window approach to handle long lists of candidates efficiently.
@@ -54,7 +54,9 @@ The evaluation pipelines can be found in the [pipelines](src/rankers/pipelines) 
 - **Pairwise and Setwise Rankers**: Mistral, Phi-3, and Llama-3.
 - **Listwise Ranker**: RankLlama and RankZephyr (models specifically trained for ranking).
 
-**Evaluation Results**:  
+**Evaluation Results**:
+
+We report the `NDCG@10` scores for each dataset and method in the table below:
 
 | **Model**        | **Ranker**    | **Method**     | **FiQA**   | **SciFACT** | **NFCorpus** | **TREC-19** | **TREC-19** |
 | ------------- | --------- | ---------- | ------ | ------- | -------- | ------- | ------- |
