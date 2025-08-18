@@ -6,9 +6,9 @@ Large Language Models (LLMs) can be efficiently used for document ranking in inf
 
 We release implementations for the three types of LLM based ranking techniques:
 
-- [Setwise Ranking](https://arxiv.org/abs/2310.09497)
 - [Pairwise Ranking](https://arxiv.org/abs/2306.17563)
-- [Listwise Ranking](https://arxiv.org/pdf/2305.02156)
+- [Setwise Ranking](https://arxiv.org/abs/2310.09497)
+- [Listwise Ranking](https://arxiv.org/abs/2305.02156)
 
 Our implementation includes modular Pairwise, Setwise, and Listwise ranker components for the [Haystack](https://haystack.deepset.ai/) LLM framework. These rankers leverage structured generation and robust Pydantic validation to ensure accurate zero-shot ranking, even on smaller LLMs.
 
@@ -51,31 +51,31 @@ The evaluation pipelines can be found in the [pipelines](src/rankers/pipelines) 
 
 **Models Used**:  
 
-- **Pairwise and Setwise Rankers**: Mistral, Phi-3, and Llama-3.
-- **Listwise Ranker**: RankLlama and RankZephyr (models specifically trained for ranking).
+- **Pairwise and Setwise Rankers**: `Mistral`, `Phi-3`, and `Llama-3`.
+- **Listwise Ranker**: `RankLlama` and `RankZephyr` (models specifically trained for ranking).
 
 **Evaluation Results**:
 
 We report the `NDCG@10` scores for each dataset and method in the table below:
 
-| **Model**        | **Ranker**    | **Method**     | **FiQA**   | **SciFACT** | **NFCorpus** | **TREC-19** | **TREC-19** |
-| ------------- | --------- | ---------- | ------ | ------- | -------- | ------- | ------- |
-| Instructor-XL | \-        | \-         | 0.4650 | 0.6920  | 0.4180   | 0.5230  | 0.5040  |
-| Mistral       | Pairwise  | Heapsort   | 0.4660 | 0.6940  | 0.4270   | 0.7080  | 0.6890  |
-| Mistral       | Pairwise  | Bubblesort | 0.4660 | 0.6940  | 0.4280   | 0.7090  | 0.6920  |
-| Mistral       | Setwise   | Bubblesort | 0.4680 | 0.6950  | 0.4300   | 0.7110  | 0.6940  |
-| Mistral       | Setwise   | Heapsort   | 0.4680 | 0.6960  | 0.4310   | 0.7140  | 0.6950  |
-| Phi-3         | Setwise   | Bubblesort | 0.4690 | 0.7060  | 0.4350   | 0.7190  | 0.7010  |
-| Phi-3         | Setwise   | Bubblesort | 0.4700 | 0.7080  | 0.4360   | 0.7190  | 0.7010  |
-| Phi-3         | Pairwise  | Heapsort   | 0.4710 | 0.7110  | 0.4380   | 0.7210  | 0.7020  |
-| Phi-3         | Setwise   | Heapsort   | 0.4710 | 0.7120  | 0.4390   | 0.7220  | 0.7030  |
-| LLama-3       | Pairwise  | Bubblesort | 0.4730 | 0.7630  | 0.4400   | 0.7390  | 0.7220  |
-| LLama-3       | Pairwise  | Heapsort   | 0.4740 | 0.7670  | 0.4410   | 0.7410  | 0.7230  |
-| LLama-3       | Setwise   | Bubblesort | 0.4740 | 0.7720  | 0.4420   | 0.7440  | 0.7250  |
-| LLama-3       | Setwise   | Heapsort   | 0.4760 | 0.7760  | 0.4430   | 0.7460  | 0.7270  |
-| RankLlama     | Listwise  | \-         | 0.4796 | 0.7812  | 0.4518   | 0.7511  | 0.7642  |
-| RankZephyr    | Listwise  | \-         | **0.4892** | **0.7891**  | **0.4578**   | **0.7693**  | **0.7743**  |
+| **Model**        | **Ranker**    | **Method**     | **FiQA**   | **SciFACT** | **NFCorpus** | **TREC-19** | **TREC-20** |
+|---------------|------------|-------------|--------:|-----------:|------------:|-----------:|-----------:|
+| `Instructor-XL` |     \-    |      \-    | 0.4650 | 0.6920  | 0.4180   | 0.5230  | 0.5040  |
+| `Mistral`       | Pairwise  | Heapsort   | 0.4660 | 0.6940  | 0.4270   | 0.7080  | 0.6890  |
+| `Mistral`       | Pairwise  | Bubblesort | 0.4660 | 0.6940  | 0.4280   | 0.7090  | 0.6920  |
+| `Mistral`       | Setwise   | Bubblesort | 0.4680 | 0.6950  | 0.4300   | 0.7110  | 0.6940  |
+| `Mistral`       | Setwise   | Heapsort   | 0.4680 | 0.6960  | 0.4310   | 0.7140  | 0.6950  |
+| `Phi-3`         | Setwise   | Bubblesort | 0.4690 | 0.7060  | 0.4350   | 0.7190  | 0.7010  |
+| `Phi-3`         | Setwise   | Bubblesort | 0.4700 | 0.7080  | 0.4360   | 0.7190  | 0.7010  |
+| `Phi-3`         | Pairwise  | Heapsort   | 0.4710 | 0.7110  | 0.4380   | 0.7210  | 0.7020  |
+| `Phi-3`         | Setwise   | Heapsort   | 0.4710 | 0.7120  | 0.4390   | 0.7220  | 0.7030  |
+| `Llama-3`       | Pairwise  | Bubblesort | 0.4730 | 0.7630  | 0.4400   | 0.7390  | 0.7220  |
+| `Llama-3`       | Pairwise  | Heapsort   | 0.4740 | 0.7670  | 0.4410   | 0.7410  | 0.7230  |
+| `Llama-3`       | Setwise   | Bubblesort | 0.4740 | 0.7720  | 0.4420   | 0.7440  | 0.7250  |
+| `Llama-3`       | Setwise   | Heapsort   | 0.4760 | 0.7760  | 0.4430   | 0.7460  | 0.7270  |
+| `RankLlama`     | Listwise  | \-         | 0.4796 | 0.7812  | 0.4518   | 0.7511  | 0.7642  |
+| `RankZephyr`    | Listwise  | \-         | **0.4892** | **0.7891**  | **0.4578**   | **0.7693**  | **0.7743**  |
 
 - All rankers performed closely across all datasets.
-- RankLlama and RankZephyr (used with the Listwise ranker) consistently achieved slightly better results than the other rankers.
-- Among the models not explicitly trained for reranking, the Llama-3 model with the Setwise and Pairwise ranker performed the best.
+- `RankLlama` and `RankZephyr` (used with the Listwise ranker) consistently achieved slightly better results than the other rankers.
+- Among the models not explicitly trained for reranking, the `Llama-3` model with the Setwise and Pairwise ranker performed the best.
