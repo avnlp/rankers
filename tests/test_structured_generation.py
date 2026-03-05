@@ -1,10 +1,15 @@
+"""Tests for the StructuredGeneration utility class."""
+
 from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 from pydantic import BaseModel
 from transformers import PreTrainedModel, PreTrainedTokenizer
 
-from rankers.utils.structured_generation import DEFAULT_SYSTEM_PROMPT, StructuredGeneration
+from rankers.utils.structured_generation import (
+    DEFAULT_SYSTEM_PROMPT,
+    StructuredGeneration,
+)
 
 
 class MockModel:
@@ -32,20 +37,34 @@ class TestStructuredGenerationInitialization:
     @pytest.fixture
     def mock_transformers(self):
         """Fixture for mocking transformer components."""
-        with (
-            patch("transformers.AutoTokenizer.from_pretrained") as mock_tokenizer,
-            patch("outlines.models.transformers") as mock_model,
-        ):
-            # Create a fully mocked tokenizer
-            tokenizer_mock = MagicMock()
-            tokenizer_mock.apply_chat_template.side_effect = lambda messages, **kwargs: " ".join(
-                [f"{m['role']}: {m['content']}" for m in messages]
-            )
-            tokenizer_mock.get_vocab.return_value = {"dummy": 0}  # Required method
+        tokenizer_mock = MagicMock()
+        tokenizer_mock.apply_chat_template.side_effect = lambda messages, **kwargs: (
+            " ".join([f"{m['role']}: {m['content']}" for m in messages])
+        )
+        tokenizer_mock.get_vocab.return_value = {"dummy": 0}
+        hf_model_mock = MagicMock()
 
-            mock_tokenizer.return_value = tokenizer_mock
-            mock_model.return_value = MockModel()
-            yield mock_tokenizer, mock_model
+        with (
+            patch(
+                "transformers.AutoTokenizer.from_pretrained",
+                return_value=tokenizer_mock,
+            ) as mock_tokenizer,
+            patch(
+                "transformers.AutoModelForCausalLM.from_pretrained",
+                return_value=hf_model_mock,
+            ) as mock_hf_model,
+            patch.object(
+                PreTrainedModel, "from_pretrained", return_value=hf_model_mock
+            ),
+            patch.object(
+                PreTrainedTokenizer, "from_pretrained", return_value=tokenizer_mock
+            ),
+            patch(
+                "rankers.utils.structured_generation.from_transformers",
+                return_value=MockModel(),
+            ) as mock_from_transformers,
+        ):
+            yield mock_tokenizer, mock_hf_model, mock_from_transformers
 
     @pytest.fixture
     def structured_gen(self, mock_transformers):
@@ -60,11 +79,13 @@ class TestStructuredGenerationInitialization:
     @pytest.fixture
     def mock_generator(self):
         """Fixture for mocking the JSON generator."""
-        with patch("outlines.generate.json") as mock_json:
+        with patch("rankers.utils.structured_generation.Generator") as mock_gen:
             mock_instance = Mock()
-            mock_instance.return_value = SampleOutputSchema(answer="Test answer", confidence=0.9)
-            mock_json.return_value = mock_instance
-            yield mock_json
+            mock_instance.return_value = SampleOutputSchema(
+                answer="Test answer", confidence=0.9
+            )
+            mock_gen.return_value = mock_instance
+            yield mock_gen
 
     def test_default_initialization(self, mock_transformers):
         """Test initialization with minimal required parameters."""
@@ -94,18 +115,14 @@ class TestStructuredGenerationInitialization:
 
     def test_model_initialization_calls(self, mock_transformers):
         """Verify model and tokenizer initialization calls."""
-        mock_tokenizer, mock_model = mock_transformers
+        mock_tokenizer, mock_hf_model, mock_from_transformers = mock_transformers
 
         StructuredGeneration(model_name="test-model")
 
-        mock_tokenizer.assert_called_once_with("test-model", **{})
-        mock_model.assert_called_once_with(
-            model_name="test-model",
-            device=None,
-            model_kwargs={},
-            tokenizer_kwargs={},
-            model_class=None,
-            tokenizer_class=None,
+        mock_tokenizer.assert_called_once_with("test-model")
+        mock_hf_model.assert_called_once_with("test-model")
+        mock_from_transformers.assert_called_once_with(
+            mock_hf_model.return_value, mock_tokenizer.return_value
         )
 
     def test_valid_prompt_creation(self, structured_gen):
@@ -142,7 +159,9 @@ class TestStructuredGenerationInitialization:
 
     def test_successful_generation(self, structured_gen, mock_generator):
         """Test successful generation with valid inputs."""
-        result = structured_gen.generate(output_format=SampleOutputSchema, user_prompt="Test", system_prompt="Test")
+        result = structured_gen.generate(
+            output_format=SampleOutputSchema, user_prompt="Test", system_prompt="Test"
+        )
 
         assert isinstance(result, SampleOutputSchema)
         mock_generator.assert_called_once_with(structured_gen.model, SampleOutputSchema)
@@ -156,13 +175,17 @@ class TestStructuredGenerationInitialization:
         """Test generation with different output schemas."""
         mock_generator.return_value.return_value = CustomSchema(summary="Test")
 
-        result = structured_gen.generate(output_format=CustomSchema, user_prompt="Test", system_prompt="Test")
+        result = structured_gen.generate(
+            output_format=CustomSchema, user_prompt="Test", system_prompt="Test"
+        )
 
         assert isinstance(result, CustomSchema)
         assert result.summary == "Test"
 
     def test_generator_configuration(self, structured_gen, mock_generator):
         """Verify generator is configured with correct model and schema."""
-        structured_gen.generate(output_format=SampleOutputSchema, user_prompt="Test", system_prompt="Test")
+        structured_gen.generate(
+            output_format=SampleOutputSchema, user_prompt="Test", system_prompt="Test"
+        )
 
         mock_generator.assert_called_once_with(structured_gen.model, SampleOutputSchema)

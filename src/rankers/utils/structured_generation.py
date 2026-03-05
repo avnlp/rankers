@@ -1,6 +1,14 @@
-from outlines import generate, models
+"""Structured text generation using transformer models with Outlines."""
+
+from outlines import Generator, from_transformers
 from pydantic import BaseModel
-from transformers import AutoTokenizer, PreTrainedModel, PreTrainedTokenizer
+from transformers import (
+    AutoModelForCausalLM,
+    AutoTokenizer,
+    PreTrainedModel,
+    PreTrainedTokenizer,
+)
+
 
 DEFAULT_SYSTEM_PROMPT = "You are a helpful assistant."
 
@@ -44,17 +52,21 @@ class StructuredGeneration:
         self.model_class = model_class
         self.tokenizer_class = tokenizer_class
 
-        self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-        self.model = models.transformers(
-            model_name=self.model_name,
-            device=self.device,
-            model_kwargs=self.model_kwargs,
-            tokenizer_kwargs=self.tokenizer_kwargs,
-            model_class=self.model_class,
-            tokenizer_class=self.tokenizer_class,
+        tok_cls = self.tokenizer_class or AutoTokenizer
+        self.tokenizer = tok_cls.from_pretrained(
+            self.model_name, **self.tokenizer_kwargs
         )
 
-    def _prepare_prompt(self, user_prompt: str | None, system_prompt: str | None) -> str:
+        mdl_cls = self.model_class or AutoModelForCausalLM
+        hf_model = mdl_cls.from_pretrained(self.model_name, **self.model_kwargs)
+        if self.device is not None:
+            hf_model = hf_model.to(self.device)
+
+        self.model = from_transformers(hf_model, self.tokenizer)
+
+    def _prepare_prompt(
+        self, user_prompt: str | None, system_prompt: str | None
+    ) -> str:
         """Construct a formatted prompt using the tokenizer's chat template.
 
         Args:
@@ -75,7 +87,7 @@ class StructuredGeneration:
             system_prompt = DEFAULT_SYSTEM_PROMPT
 
         tokenizer = AutoTokenizer.from_pretrained(self.model_name)
-        prompt = tokenizer.apply_chat_template(
+        return tokenizer.apply_chat_template(
             [
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
@@ -83,7 +95,6 @@ class StructuredGeneration:
             tokenize=False,
             add_generation_prompt=True,
         )
-        return prompt
 
     def generate(
         self,
@@ -105,6 +116,5 @@ class StructuredGeneration:
             ValueError: If either prompt argument is None or empty.
         """
         prompt = self._prepare_prompt(user_prompt, system_prompt)
-        generator = generate.json(self.model, output_format)
-        result = generator(prompt)
-        return result
+        generator = Generator(self.model, output_format)
+        return generator(prompt)
