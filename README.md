@@ -3,8 +3,12 @@
 <div align="center">
 
 [![DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/avnlp/rankers)
-[![lint](https://github.com/avnlp/rankers/actions/workflows/lint.yml/badge.svg)](https://github.com/avnlp/rankers/actions/workflows/lint.yml)
-[![tests](https://github.com/avnlp/rankers/actions/workflows/tests.yml/badge.svg)](https://github.com/avnlp/rankers/actions/workflows/tests.yml)
+[![CI](https://img.shields.io/github/actions/workflow/status/avnlp/rankers/ci.yml?branch=main&label=CI&logo=githubactions)](https://github.com/avnlp/rankers/actions/workflows/ci.yml)
+[![Codecov](https://codecov.io/gh/avnlp/rankers/graph/badge.svg)](https://codecov.io/gh/avnlp/rankers)
+[![Ruff](https://img.shields.io/github/actions/workflow/status/avnlp/rankers/ci.yml?branch=main&label=Ruff&logo=ruff)](https://github.com/avnlp/rankers/actions/workflows/ci.yml)
+[![MyPy](https://img.shields.io/github/actions/workflow/status/avnlp/rankers/ci.yml?branch=main&label=MyPy&logo=python)](https://github.com/avnlp/rankers/actions/workflows/ci.yml)
+[![Bandit](https://img.shields.io/github/actions/workflow/status/avnlp/rankers/ci.yml?branch=main&label=Bandit&logo=owasp)](https://github.com/avnlp/rankers/actions/workflows/ci.yml)
+[![Tests](https://img.shields.io/github/actions/workflow/status/avnlp/rankers/ci.yml?branch=main&label=Tests&logo=pytest)](https://github.com/avnlp/rankers/actions/workflows/ci.yml)
 [![License](https://img.shields.io/github/license/avnlp/rankers?color=green)](https://github.com/avnlp/rankers/blob/main/LICENSE)
 
 </div>

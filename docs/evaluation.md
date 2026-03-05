@@ -175,10 +175,10 @@ for query_id, query_text in dataset.queries.items():
          Document(id=doc_id, content=dataset.corpus[doc_id]["text"])
          for doc_id in dataset.corpus.keys()
      ]
-     
+
      # Rank documents
      result = ranker.run(documents=docs, query=query_text)
-     
+
      # Store ranking: {doc_id: score}
      run_results[query_id] = {
          doc.id: i for i, doc in enumerate(result["documents"])

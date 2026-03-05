@@ -240,13 +240,13 @@ print(f"Num queries: {len(dataset.queries)}")
 # Print first 3 queries
 for query_id, query_text in list(dataset.queries.items())[:3]:
     print(f"\nQuery {query_id}: {query_text}")
-    
+
     # Find relevant documents for this query
     relevant_docs = dataset.relevance_judgments.get(query_id, {})
     relevant_doc_ids = [doc_id for doc_id, rel in relevant_docs.items() if rel > 0]
-    
+
     print(f"  Relevant docs: {relevant_doc_ids[:5]}")
-    
+
     # Print content of first relevant doc
     if relevant_doc_ids:
         doc_id = relevant_doc_ids[0]
@@ -294,10 +294,10 @@ for query_id, query_text in list(dataset.queries.items())[:5]:
         Document(id=doc_id, content=dataset.corpus[doc_id]["text"])
         for doc_id in dataset.corpus.keys()
     ]
-    
+
     # Rank documents
     result = ranker.run(documents=docs, query=query_text)
-    
+
     # Process ranked results
     ranked_docs = result["documents"]
     print(f"Top-3 for query {query_id}:")
@@ -353,10 +353,10 @@ for query_id, query_text in dataset.queries.items():
         Document(id=doc_id, content=dataset.corpus[doc_id]["text"])
         for doc_id in dataset.corpus.keys()
     ]
-    
+
     # Rank
     result = ranker.run(documents=docs, query=query_text)
-    
+
     # Store results
     run_results[query_id] = {
         doc.id: i for i, doc in enumerate(result["documents"])

@@ -478,9 +478,9 @@ from haystack import Document
 try:
     if not documents:
         raise ValueError("Empty documents list")
-    
+
     result = ranker.run(documents=documents, query=query)
-    
+
 except ValueError as e:
     logger.error(f"Invalid input: {e}")
     return []
