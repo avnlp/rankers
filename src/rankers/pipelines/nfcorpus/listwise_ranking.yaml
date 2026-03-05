@@ -17,7 +17,7 @@ ranker:
   sliding_window_size: 5
   sliding_window_step: 2
   system_message: "You are RankLLM, an intelligent assistant that can rank medical passages based on their relevancy to the query."
-  
+
 # Embedding configuration
 embedding:
   model: "hkunlp/instructor-xl"
