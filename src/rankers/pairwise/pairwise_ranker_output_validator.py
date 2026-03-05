@@ -1,4 +1,6 @@
-from pydantic import BaseModel, Field, ValidationInfo, field_validator
+"""Pairwise ranking output validation model."""
+
+from pydantic import BaseModel, Field
 
 
 class PairwiseRankingOutput(BaseModel):
@@ -28,34 +30,3 @@ class PairwiseRankingOutput(BaseModel):
         ),
         examples=["A", "B"],
     )
-
-    @field_validator("selected_passage")
-    @classmethod
-    def validate_identifier(cls, value: str, info: ValidationInfo) -> str:
-        """Validate and normalize the passage selection identifier.
-
-        Args:
-            value: Raw value from LLM output
-            info: Pydantic validation context (automatically populated)
-
-        Returns:
-            str: Normalized uppercase identifier if valid
-
-        Raises:
-            ValueError: For any input not matching 'A' or 'B' pattern
-
-        Example:
-            Valid inputs:
-            - "A" → returns "A"
-            - "B" → returns "B"
-
-            Invalid inputs:
-            - "a" → ValueError
-            - "C" → ValueError
-            - "(A)" → ValueError
-        """
-        normalized = value.strip().upper()
-        if normalized not in {"A", "B"}:
-            msg = f"Invalid selection: '{value}'. Must be uppercase 'A' or 'B' without parentheses."
-            raise ValueError(msg)
-        return normalized

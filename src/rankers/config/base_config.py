@@ -1,3 +1,5 @@
+"""Base Pydantic configuration models shared across ranking pipelines."""
+
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
@@ -19,7 +21,9 @@ class EmbeddingConfig(BaseModel):
         ...,
         description="Name of the embedding model to use. For example, 'sentence-transformers/all-MiniLM-L6-v2'.",
     )
-    model_kwargs: dict[str, Any] = Field(default_factory=dict, description="Additional model configuration parameters.")
+    model_kwargs: dict[str, Any] = Field(
+        default_factory=dict, description="Additional model configuration parameters."
+    )
 
     @model_validator(mode="after")
     def ensure_device_is_none(self):
@@ -32,12 +36,15 @@ class EmbeddingConfig(BaseModel):
 class MilvusConfig(BaseModel):
     """Configuration for the Milvus vector database."""
 
-    connection_uri: str = Field(..., description="Milvus server URI (e.g., 'http://localhost:19530')")
+    connection_uri: str = Field(
+        ..., description="Milvus server URI (e.g., 'http://localhost:19530')"
+    )
 
     connection_token: str = Field(..., description="Authentication token for Milvus")
 
     document_store_kwargs: dict[str, Any] = Field(
-        default_factory=dict, description="Additional parameters for MilvusDocumentStore"
+        default_factory=dict,
+        description="Additional parameters for MilvusDocumentStore",
     )
 
 
@@ -82,7 +89,9 @@ class RetrievalConfig(BaseModel):
 
     embedding: EmbeddingConfig = Field(..., description="Embedding model configuration")
 
-    milvus: MilvusConfig = Field(..., description="Milvus vector database configuration")
+    milvus: MilvusConfig = Field(
+        ..., description="Milvus vector database configuration"
+    )
 
     evaluation: EvaluationConfig = Field(
         default_factory=EvaluationConfig,

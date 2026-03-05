@@ -1,3 +1,5 @@
+"""Pairwise LLM ranking pipeline."""
+
 import argparse
 from pathlib import Path
 
@@ -11,7 +13,7 @@ from rankers.config import PairwiseRankingConfig, load_config
 
 
 def main(config_path: str):
-    """Run a pipeline evaluating the quality of the retrieved documents after using the Pairwise LLM Ranker.
+    """Retrieve, rerank with a Pairwise LLM ranker, and evaluate IR metrics.
 
     The pipeline consists of:
     1. Loading dataset with ir_datasets format
@@ -43,7 +45,9 @@ def main(config_path: str):
     )
 
     # Initialize text embedder
-    text_embedder = SentenceTransformersTextEmbedder(model=config.embedding.model, **config.embedding.model_kwargs)
+    text_embedder = SentenceTransformersTextEmbedder(
+        model=config.embedding.model, **config.embedding.model_kwargs
+    )
 
     # Initialize ranker
     llm_ranker = PairwiseLLMRanker(
@@ -58,7 +62,9 @@ def main(config_path: str):
     # Create and connect pipeline
     embedding_pipeline = Pipeline()
     embedding_pipeline.add_component(instance=text_embedder, name="text_embedder")
-    embedding_pipeline.add_component(instance=milvus_retriever, name="embedding_retriever")
+    embedding_pipeline.add_component(
+        instance=milvus_retriever, name="embedding_retriever"
+    )
     embedding_pipeline.add_component(instance=llm_ranker, name="ranker")
     embedding_pipeline.connect("text_embedder", "embedding_retriever")
     embedding_pipeline.connect("embedding_retriever.documents", "ranker.documents")
@@ -66,7 +72,9 @@ def main(config_path: str):
     # Process each query
     all_query_results = {}
     for query_id, query in tqdm(queries.items()):
-        pipeline_output = embedding_pipeline.run({"text_embedder": {"text": query}, "ranker": {"query": query}})
+        pipeline_output = embedding_pipeline.run(
+            {"text_embedder": {"text": query}, "ranker": {"query": query}}
+        )
         ranked_documents = pipeline_output["ranker"]["documents"]
         document_scores = {}
         for document in ranked_documents:

@@ -1,3 +1,5 @@
+"""Setwise LLM ranking pipeline."""
+
 import argparse
 from pathlib import Path
 
@@ -11,7 +13,7 @@ from rankers.config import SetwiseRankingConfig, load_config
 
 
 def main(config_path: str):
-    """Run a pipeline evaluating the quality of the retrieved documents after using the Setwise LLM Ranker.
+    """Retrieve, rerank with a Setwise LLM ranker, and evaluate IR metrics.
 
     The pipeline consists of:
     1. Loading configuration from YAML
@@ -45,7 +47,9 @@ def main(config_path: str):
     )
 
     # Initialize text embedder
-    text_embedder = SentenceTransformersTextEmbedder(model=config.embedding.model, **config.embedding.model_kwargs)
+    text_embedder = SentenceTransformersTextEmbedder(
+        model=config.embedding.model, **config.embedding.model_kwargs
+    )
 
     # Initialize ranker
     llm_ranker = SetwiseLLMRanker(
@@ -69,7 +73,7 @@ def main(config_path: str):
     pipeline.connect("retriever.documents", "ranker.documents")
 
     # Process each query
-    results = {}
+    all_query_results = {}
     for q_id, query in tqdm(queries.items(), desc="Processing queries"):
         result = pipeline.run(
             {
@@ -77,24 +81,25 @@ def main(config_path: str):
                 "ranker": {"query": query},
             }
         )
-        results[q_id] = result["ranker"]["documents"]
+        ranked_documents = result["ranker"]["documents"]
+        all_query_results[q_id] = {
+            doc.meta["doc_id"]: doc.score for doc in ranked_documents
+        }
 
     # Evaluate results
-    evaluator_params = EvaluatorParams(
-        metrics=config.evaluation.metrics_to_compute,
-        cutoff_values=config.evaluation.cutoff_values,
+    evaluation_config = EvaluatorParams(
+        cutoff_values=tuple(config.evaluation.cutoff_values),
         ignore_identical_ids=config.evaluation.ignore_identical_ids,
         decimal_precision=config.evaluation.decimal_precision,
+        metrics_to_compute=tuple(config.evaluation.metrics_to_compute),
     )
-    evaluator = Evaluator(evaluator_params)
-    metrics = evaluator.evaluate(relevance_judgments, results)
-
-    # Print results
-    print("\nEvaluation Results:")
-    for metric_name, metric_values in metrics.items():
-        print(f"\n{metric_name.upper()}")
-        for cutoff, value in zip(config.evaluation.cutoff_values, metric_values, strict=True):
-            print(f"@{cutoff}: {value:.{config.evaluation.decimal_precision}f}")
+    evaluator = Evaluator(
+        relevance_judgments=relevance_judgments,
+        run_results=all_query_results,
+        config=evaluation_config,
+    )
+    evaluation_metrics = evaluator.evaluate()
+    print(evaluation_metrics)
 
 
 if __name__ == "__main__":

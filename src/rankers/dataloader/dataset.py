@@ -1,3 +1,5 @@
+"""Dataset container for IR data components."""
+
 from dataclasses import dataclass
 
 

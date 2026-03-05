@@ -1,8 +1,11 @@
+"""Utility for loading pipeline configuration from YAML files."""
+
 from pathlib import Path
 from typing import TypeVar
 
 import yaml
 from pydantic import BaseModel
+
 
 T = TypeVar("T", bound=BaseModel)
 

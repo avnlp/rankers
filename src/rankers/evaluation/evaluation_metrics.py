@@ -1,3 +1,5 @@
+"""Evaluation metrics container with validation."""
+
 from dataclasses import dataclass
 
 
@@ -8,8 +10,10 @@ class EvaluationMetrics:
     Attributes:
         ndcg (Dict[str, float]): NDCG scores keyed by metric string (e.g., 'NDCG@1').
         map (Dict[str, float]): MAP scores keyed by metric string (e.g., 'MAP@1').
-        recall (Dict[str, float]): Recall scores keyed by metric string (e.g., 'RECALL@1').
-        precision (Dict[str, float]): Precision scores keyed by metric string (e.g., 'PRECISION@1').
+        recall (Dict[str, float]): Recall scores keyed by metric string
+            (e.g., 'RECALL@1').
+        precision (Dict[str, float]): Precision scores keyed by metric string
+            (e.g., 'PRECISION@1').
     """
 
     ndcg: dict[str, float]
@@ -26,7 +30,7 @@ class EvaluationMetrics:
         # For each metric, extract the cutoff values (ignoring the metric name)
         cutoff_sets = []
         for metric in (self.ndcg, self.map, self.recall, self.precision):
-            cutoffs = {key.split("@")[1] for key in metric.keys()}
+            cutoffs = {key.split("@")[1] for key in metric}
             cutoff_sets.append(cutoffs)
         if not all(x == cutoff_sets[0] for x in cutoff_sets):
             msg = "All metrics must use the same k-values."

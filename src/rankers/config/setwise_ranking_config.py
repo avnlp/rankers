@@ -1,3 +1,5 @@
+"""Pydantic configuration models for the setwise ranking pipeline."""
+
 from enum import Enum
 
 from pydantic import BaseModel, Field, model_validator
@@ -22,7 +24,8 @@ class SetwiseLLMConfig(BaseModel):
     """Configuration for the Setwise LLM ranker."""
 
     model_name: str = Field(
-        ..., description="Hugging Face model name/path for the LLM ranker. Example: 'meta-llama/Llama-3.1-8B-Instruct'"
+        ...,
+        description="Hugging Face model name/path for the LLM ranker. Example: 'meta-llama/Llama-3.1-8B-Instruct'",
     )
     method: SetwiseMethod = Field(
         default=SetwiseMethod.HEAPSORT,
@@ -45,10 +48,15 @@ class SetwiseLLMConfig(BaseModel):
         description="For heapsort: children per node. For bubblesort: window size. Controls comparison complexity.",
     )
     device: str | None = Field(
-        default=None, description="Device for model execution. Auto-detected if None. Examples: 'cuda', 'cuda:0', 'cpu'"
+        default=None,
+        description="Device for model execution. Auto-detected if None. Examples: 'cuda', 'cuda:0', 'cpu'",
     )
-    model_kwargs: dict = Field(default_factory=dict, description="Additional model initialization parameters.")
-    tokenizer_kwargs: dict = Field(default_factory=dict, description="Tokenizer configuration.")
+    model_kwargs: dict = Field(
+        default_factory=dict, description="Additional model initialization parameters."
+    )
+    tokenizer_kwargs: dict = Field(
+        default_factory=dict, description="Tokenizer configuration."
+    )
 
     @model_validator(mode="after")
     def ensure_device_is_none(self):
@@ -75,7 +83,9 @@ class SetwiseRankingConfig(BaseModel):
     embedding: EmbeddingConfig = Field(..., description="Embedding configuration")
 
     # Milvus configuration
-    milvus: MilvusConfig = Field(..., description="Milvus vector database configuration")
+    milvus: MilvusConfig = Field(
+        ..., description="Milvus vector database configuration"
+    )
 
     # Retrieval configuration
     retrieval: RetrievalConfig = Field(..., description="Retrieval configuration")

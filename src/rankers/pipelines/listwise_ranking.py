@@ -1,3 +1,5 @@
+"""Listwise LLM ranking pipeline."""
+
 import argparse
 from pathlib import Path
 
@@ -11,7 +13,7 @@ from rankers.config import ListwiseRankingConfig, load_config
 
 
 def main(config_path: str):
-    """Run a pipeline evaluating the quality of the retrieved documents after using the Listwise LLM Ranker.
+    """Retrieve, rerank with a Listwise LLM ranker, and evaluate IR metrics.
 
     The pipeline consists of:
     1. Loading dataset with ir_datasets format
@@ -82,7 +84,9 @@ def main(config_path: str):
     # Create and connect pipeline
     embedding_pipeline = Pipeline()
     embedding_pipeline.add_component(instance=text_embedder, name="text_embedder")
-    embedding_pipeline.add_component(instance=milvus_retriever, name="embedding_retriever")
+    embedding_pipeline.add_component(
+        instance=milvus_retriever, name="embedding_retriever"
+    )
     embedding_pipeline.add_component(instance=llm_ranker, name="ranker")
 
     embedding_pipeline.connect("text_embedder", "embedding_retriever")
@@ -101,7 +105,9 @@ def main(config_path: str):
         )
 
         ranked_documents = pipeline_output["ranker"]["documents"]
-        document_scores = {document.meta["doc_id"]: document.score for document in ranked_documents}
+        document_scores = {
+            document.meta["doc_id"]: document.score for document in ranked_documents
+        }
         all_query_results[query_id] = document_scores
 
     # Evaluate results

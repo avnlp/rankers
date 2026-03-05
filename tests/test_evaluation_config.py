@@ -1,16 +1,21 @@
+"""Tests for evaluation configuration."""
+
 import pytest
 
 from rankers.evaluation.evaluator_params import EvaluatorParams
 
 
 class TestEvaluatorParams:
-    """Test suite for the EvaluatorParams class, ensuring correct initialization and validation."""
+    """Test suite for EvaluatorParams class.
+
+    Ensures correct init and validation.
+    """
 
     def test_valid_config_initialization(self):
-        """Test that EvaluatorParams correctly initializes with custom configuration values.
+        """Test EvaluatorParams initializes with custom config values.
 
-        Verifies that all configuration parameters are correctly set during initialization
-        and can be retrieved with the exact values provided.
+        Verifies that all config parameters are correctly set during
+        initialization and can be retrieved with the exact values provided.
         """
         config = EvaluatorParams(
             cutoff_values=(1, 3, 5, 10),
@@ -46,14 +51,14 @@ class TestEvaluatorParams:
     def test_invalid_metrics_raises_error(self):
         """Test that EvaluatorParams raises a ValueError for unsupported metrics.
 
-        Ensures that only predefined, valid metrics can be specified during configuration,
+        Ensures that only predefined, valid metrics can be specified during config,
         preventing potential errors during evaluation.
         """
         with pytest.raises(ValueError):
             EvaluatorParams(metrics_to_compute=("invalid_metric",))
 
     def test_default_config_values(self):
-        """Test that EvaluatorParams provides sensible default values when no parameters are specified.
+        """Test EvaluatorParams provides sensible defaults when no params specified.
 
         Verifies that:
         - Cutoff values are not empty
@@ -68,3 +73,21 @@ class TestEvaluatorParams:
         assert isinstance(config.ignore_identical_ids, bool)
         assert isinstance(config.decimal_precision, int)
         assert len(config.metrics_to_compute) > 0
+
+    def test_list_cutoff_values_raises_error(self):
+        """Test that passing a list for cutoff_values raises a ValueError.
+
+        EvaluatorParams requires cutoff_values to be a tuple, so a list triggers
+        the type check in __post_init__ and raises ValueError.
+        """
+        with pytest.raises(ValueError):
+            EvaluatorParams(cutoff_values=[1, 3, 5])
+
+    def test_list_metrics_to_compute_raises_error(self):
+        """Test that passing a list for metrics_to_compute raises a ValueError.
+
+        EvaluatorParams requires metrics_to_compute to be a tuple, so a list triggers
+        the type check in __post_init__ and raises ValueError.
+        """
+        with pytest.raises(ValueError):
+            EvaluatorParams(metrics_to_compute=["ndcg", "map"])

@@ -1,8 +1,16 @@
+"""Pydantic configuration models for the pairwise ranking pipeline."""
+
 from enum import Enum
 
 from pydantic import BaseModel, Field, model_validator
 
-from rankers.config.base_config import DatasetConfig, EmbeddingConfig, EvaluationConfig, MilvusConfig, RetrievalConfig
+from rankers.config.base_config import (
+    DatasetConfig,
+    EmbeddingConfig,
+    EvaluationConfig,
+    MilvusConfig,
+    RetrievalConfig,
+)
 
 
 class PairwiseMethod(str, Enum):
@@ -17,7 +25,8 @@ class LLMConfig(BaseModel):
     """Configuration for the LLM ranker."""
 
     model_name: str = Field(
-        ..., description="Hugging Face model name/path for the LLM ranker. Example: 'meta-llama/Llama-3.1-8B-Instruct'"
+        ...,
+        description="Hugging Face model name/path for the LLM ranker. Example: 'meta-llama/Llama-3.1-8B-Instruct'",
     )
     method: PairwiseMethod = Field(
         default=PairwiseMethod.HEAPSORT,
@@ -31,10 +40,15 @@ class LLMConfig(BaseModel):
         description="Maximum number of documents to rerank and return. Higher values increase computation time.",
     )
     device: str | None = Field(
-        default=None, description="Device for model execution. Auto-detected if None. Examples: 'cuda', 'cuda:0', 'cpu'"
+        default=None,
+        description="Device for model execution. Auto-detected if None. Examples: 'cuda', 'cuda:0', 'cpu'",
     )
-    model_kwargs: dict = Field(default_factory=dict, description="Additional model initialization parameters.")
-    tokenizer_kwargs: dict = Field(default_factory=dict, description="Tokenizer configuration.")
+    model_kwargs: dict = Field(
+        default_factory=dict, description="Additional model initialization parameters."
+    )
+    tokenizer_kwargs: dict = Field(
+        default_factory=dict, description="Tokenizer configuration."
+    )
 
     @model_validator(mode="after")
     def ensure_device_is_none(self):
@@ -47,8 +61,8 @@ class LLMConfig(BaseModel):
 class PairwiseRankingConfig(BaseModel):
     """Configuration for the pairwise ranking pipeline.
 
-    This configuration includes all settings needed to run the pairwise ranking pipeline,
-    including dataset, embedding, retrieval, and evaluation configurations.
+    Includes all settings needed to run the pairwise ranking pipeline: dataset,
+    embedding, retrieval, and evaluation configurations.
     """
 
     # Dataset configuration
@@ -61,7 +75,9 @@ class PairwiseRankingConfig(BaseModel):
     embedding: EmbeddingConfig = Field(..., description="Embedding configuration")
 
     # Milvus configuration
-    milvus: MilvusConfig = Field(..., description="Milvus vector database configuration")
+    milvus: MilvusConfig = Field(
+        ..., description="Milvus vector database configuration"
+    )
 
     # Retrieval configuration
     retrieval: RetrievalConfig = Field(..., description="Retrieval configuration")
