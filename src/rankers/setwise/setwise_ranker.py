@@ -1,19 +1,23 @@
+"""Setwise LLM reranking component for Haystack."""
+
 # This implementation is based on the Setwise Ranker from https://github.com/ielab/llm-rankers/blob/main/llmrankers/setwise.py
 
 import copy
 
-import weave
 from haystack import Document, component
 from transformers import PreTrainedModel, PreTrainedTokenizer
 
-from rankers.setwise.setwise_ranker_output_validator import IDENTIFIERS, SetwiseRankingOutput
+from rankers.setwise.setwise_ranker_output_validator import (
+    IDENTIFIERS,
+    SetwiseRankingOutput,
+)
 from rankers.setwise.setwise_ranking_prompt import SYSTEM_PROMPT, USER_PROMPT
 from rankers.utils import StructuredGeneration
 
 
 @component
 class SetwiseLLMRanker:
-    """A Setwise LLM Ranker that reranks documents using a language model to compare passages in a setwise manner.
+    """Setwise LLM Ranker that reranks documents using a language model.
 
     The ranker supports different methods like heapsort and bubblesort for reranking.
 
@@ -23,8 +27,14 @@ class SetwiseLLMRanker:
     from haystack import Document
 
     ranker = SetwiseLLMRanker(model_name="meta-llama/Llama-3.1-8B", top_k=10)
-    documents = [Document(content="Paris"), Document(content="Berlin"), Document(content="Madrid")]
-    result = ranker.run(documents=documents, query="Which city is the capital of France?")
+    documents = [
+        Document(content="Paris"),
+        Document(content="Berlin"),
+        Document(content="Madrid"),
+    ]
+    result = ranker.run(
+        documents=documents, query="Which city is the capital of France?"
+    )
     for doc in result["documents"]:
         print(doc.content)
     ```
@@ -53,8 +63,10 @@ class SetwiseLLMRanker:
             model_class: (Optional) Specific model class.
             tokenizer_class: (Optional) Specific tokenizer class.
             method: Reranking method; either "heapsort" or "bubblesort".
-            num_permutation: Number of permutations (kept for compatibility with the original signature).
-            num_child: Number of children per node (used in multi-child heapify and sliding-window bubblesort).
+            num_permutation: Number of permutations (kept for compatibility with the
+                original signature).
+            num_child: Number of children per node (used in multi-child heapify and
+                sliding-window bubblesort).
             top_k: Maximum number of top documents to rerank.
         """
         self.model_name = model_name
@@ -72,7 +84,7 @@ class SetwiseLLMRanker:
         self._is_warmed_up = False
 
     def _warm_up(self):
-        """Initialize the LLM and tokenizer if they have not been initialized already."""
+        """Initialize the LLM and tokenizer if not already initialized."""
         if not self._is_warmed_up:
             self._structured_generation_model = StructuredGeneration(
                 model_name=self.model_name,
@@ -94,8 +106,9 @@ class SetwiseLLMRanker:
         Returns:
             A string corresponding to one of the identifiers from IDENTIFIERS.
         """
-        # Build the passages string using the provided identifiers.
-        passages = "\n\n".join([f'Passage {IDENTIFIERS[i]}: "{doc.content}"' for i, doc in enumerate(docs)])
+        passages = "\n\n".join(
+            [f'Passage {IDENTIFIERS[i]}: "{doc.content}"' for i, doc in enumerate(docs)]
+        )
         user_prompt = USER_PROMPT.format(query=query, passages=passages)
         output = self._structured_generation_model.generate(
             user_prompt=user_prompt,
@@ -105,13 +118,21 @@ class SetwiseLLMRanker:
         return output.selected_passage
 
     def heapify(self, arr: list[Document], n: int, i: int, query: str):
-        """Heapify the sub-tree rooted at index i for a multi-child heap using the LLM for comparisons."""
+        """Heapify sub-tree rooted at index i for a multi-child heap via LLM."""
         # Only proceed if there are children for node i.
         if self.num_child * i + 1 < n:
             # Create a list containing the parent followed by all its children.
-            docs = [arr[i], *arr[self.num_child * i + 1 : min(self.num_child * (i + 1) + 1, n)]]
+            docs = [
+                arr[i],
+                *arr[self.num_child * i + 1 : min(self.num_child * (i + 1) + 1, n)],
+            ]
             # Maintain a corresponding list of indices.
-            inds = [i, *list(range(self.num_child * i + 1, min(self.num_child * (i + 1) + 1, n)))]
+            inds = [
+                i,
+                *list(
+                    range(self.num_child * i + 1, min(self.num_child * (i + 1) + 1, n))
+                ),
+            ]
             output = self.compare(query, docs)
             try:
                 best_ind = IDENTIFIERS.index(output)
@@ -121,34 +142,32 @@ class SetwiseLLMRanker:
                 largest = inds[best_ind]
             except IndexError:
                 largest = i
-            # If the parent is not the best, swap with the best child and continue heapifying.
+            # If the parent is not the best, swap with the best child and continue.
             if largest != i:
                 arr[i], arr[largest] = arr[largest], arr[i]
                 self.heapify(arr, n, largest, query)
 
     def heapsort(self, arr: list[Document], query: str, k: int):
-        """Sort the list using a modified heapsort that leverages the LLM for comparisons.
+        """Sort the list using a modified heapsort that leverages the LLM.
 
         Extraction stops once k elements have been placed in their final positions.
         """
         n = len(arr)
-        ranked = 0
         # Build a max heap.
         for i in range(n // self.num_child, -1, -1):
             self.heapify(arr, n, i, query)
         # Extract the largest element repeatedly.
-        for i in range(n - 1, 0, -1):
+        for ranked, i in enumerate(range(n - 1, 0, -1), start=1):
             arr[i], arr[0] = arr[0], arr[i]
-            ranked += 1
             if ranked == k:
                 break
             self.heapify(arr, i, 0, query)
 
     def bubblesort(self, arr: list[Document], query: str):
-        """Sort the list using a sliding-window bubblesort that leverages the LLM for comparisons.
+        """Sort the list using a sliding-window bubblesort leveraging the LLM.
 
-        The method repeatedly examines windows of (num_child + 1) documents and swaps the best
-        document (if not already at the start of the window).
+        The method repeatedly examines windows of (num_child + 1) documents and swaps
+        the best document (if not already at the start of the window).
         """
         n = len(arr)
         last_start = n - (self.num_child + 1)
@@ -169,11 +188,17 @@ class SetwiseLLMRanker:
                     best_ind = 0
                 if best_ind != 0:
                     # Swap the best document to the beginning of the window.
-                    arr[start_ind], arr[start_ind + best_ind] = arr[start_ind + best_ind], arr[start_ind]
+                    arr[start_ind], arr[start_ind + best_ind] = (
+                        arr[start_ind + best_ind],
+                        arr[start_ind],
+                    )
                     if not is_change:
                         is_change = True
                         # Adjust the sliding window if the best element was at the end.
-                        if last_start != n - (self.num_child + 1) and best_ind == len(arr[start_ind:end_ind]) - 1:
+                        if (
+                            last_start != n - (self.num_child + 1)
+                            and best_ind == len(arr[start_ind:end_ind]) - 1
+                        ):
                             last_start += len(arr[start_ind:end_ind]) - 1
                 if start_ind == i:
                     break
@@ -185,8 +210,8 @@ class SetwiseLLMRanker:
     def rerank(self, query: str, ranking: list[Document]) -> list[Document]:
         """Reorder the given list of Documents according to the selected method.
 
-        The top_k documents (as determined by LLM comparisons) are placed first, and the rest
-        are appended in their original order.
+        The top_k documents (as determined by LLM comparisons) are placed first, and
+        the rest are appended in their original order.
         """
         original_ranking = copy.deepcopy(ranking)
 
@@ -202,7 +227,7 @@ class SetwiseLLMRanker:
 
         # Assemble the final ranking:
         # 1. Place the top_k documents (as ordered by the sorting).
-        # 2. Append documents that were not moved into the top_k, preserving original order.
+        # 2. Append documents not moved into the top_k, preserving original order.
         result = []
         top_doc_ids = set()
         for doc in ranking[: self.top_k]:
@@ -214,7 +239,6 @@ class SetwiseLLMRanker:
 
         return result
 
-    @weave.op
     @component.output_types(documents=list[Document])
     def run(
         self,
@@ -225,12 +249,13 @@ class SetwiseLLMRanker:
         num_child: int | None = None,
         method: str | None = None,
     ) -> dict:
-        """Rerank Haystack Document objects given a query using the Setwise ranking method.
+        """Rerank Haystack Document objects given a query using the Setwise method.
 
         The selected method can be "heapsort" or "bubblesort".
 
         Returns:
-            A dictionary with the key "documents" mapping to the reordered list of Document objects.
+            A dictionary with the key "documents" mapping to the reordered list of
+            Document objects.
         """
         if not documents:
             return {"documents": []}

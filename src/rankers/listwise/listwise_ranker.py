@@ -1,7 +1,8 @@
+"""Listwise LLM reranking component for Haystack."""
+
 from copy import deepcopy
 from typing import Literal
 
-import weave
 from haystack import Document, component
 from rank_llm.data import Candidate, Query, Request
 from rank_llm.rerank import PromptMode
@@ -12,16 +13,21 @@ from rank_llm.rerank.listwise.zephyr_reranker import ZephyrReranker
 
 @component
 class ListwiseLLMRanker:
-    """A Haystack component for listwise reranking of documents using Large Language Models (LLMs).
+    """A Haystack component for listwise reranking using LLMs.
 
-    This component utilizes LLMs such as Zephyr, Vicuna, or RankGPT to rerank documents based on their relevance to a
-    query. It supports different reranking strategies, sliding window processing for handling long document lists, and
+    This component uses LLMs like Zephyr, Vicuna, or RankGPT to rerank
+    documents by relevance to a query. It supports different reranking
+    strategies, sliding window processing for long document lists, and
     integration with various model backends including OpenAI and Azure AI.
 
     Example:
         ```python
-        ranker = ListwiseLLMRanker(ranker_type="zephyr", model_path="castorini/rank_zephyr_7b_v1_full")
-        results = ranker.run(query="What is the capital of France?", documents=documents, top_k=10)
+        ranker = ListwiseLLMRanker(
+            ranker_type="zephyr", model_path="castorini/rank_zephyr_7b_v1_full"
+        )
+        results = ranker.run(
+            query="What is the capital of France?", documents=documents, top_k=10
+        )
         ```
     """
 
@@ -48,24 +54,34 @@ class ListwiseLLMRanker:
         """Initialize the ListwiseLLMRanker component with the specified parameters.
 
         Args:
-            model_path (str): Path or identifier of the pre-trained model to use. Defaults to
-                "castorini/rank_zephyr_7b_v1_full".
-            ranker_type (Literal["zephyr", "vicuna", "rank_gpt"]): Type of reranker to use. Defaults to "zephyr".
-            context_size (int): Maximum context size in tokens that the model can handle. Defaults to 4096.
-            prompt_mode (PromptMode): Prompt generation mode. Defaults to PromptMode.RANK_GPT.
-            num_few_shot_examples (int): Number of few-shot examples to include in prompts. Defaults to 0.
-            device (str): Device for inference ("cuda" or "cpu"). Defaults to "cuda".
-            num_gpus (int): Number of GPUs to use. Defaults to 1.
-            variable_passages (bool): Whether to allow variable number of passages per request. Defaults to False.
-            sliding_window_size (int): Size of sliding window for processing long documents. Defaults to 20.
-            sliding_window_step (int): Step size for sliding window movement. Defaults to 10.
-            system_message (str): System message to configure LLM behavior. Defaults to standard ranking message.
-            openai_api_keys (Optional[list[str]]): OpenAI API keys for authentication. Required for RankGPT.
-            openai_key_start_id (Optional[int]): Starting index for OpenAI key rotation. Defaults to None.
-            openai_proxy (Optional[str]): Proxy configuration for OpenAI API. Defaults to None.
-            api_type (Optional[str]): API type for Azure AI services. Defaults to None.
-            api_base (Optional[str]): API base URL for Azure AI services. Defaults to None.
-            api_version (Optional[str]): API version for Azure AI services. Defaults to None.
+            model_path: Path or identifier of the pre-trained model to use.
+                Defaults to "castorini/rank_zephyr_7b_v1_full".
+            ranker_type: Type of reranker to use. Defaults to "zephyr".
+            context_size: Maximum context size in tokens that the model can
+                handle. Defaults to 4096.
+            prompt_mode: Prompt generation mode. Defaults to
+                PromptMode.RANK_GPT.
+            num_few_shot_examples: Number of few-shot examples to include in
+                prompts. Defaults to 0.
+            device: Device for inference ("cuda" or "cpu"). Defaults to "cuda".
+            num_gpus: Number of GPUs to use. Defaults to 1.
+            variable_passages: Whether to allow variable number of passages
+                per request. Defaults to False.
+            sliding_window_size: Size of sliding window for processing long
+                documents. Defaults to 20.
+            sliding_window_step: Step size for sliding window movement.
+                Defaults to 10.
+            system_message: System message to configure LLM behavior.
+                Defaults to standard ranking message.
+            openai_api_keys: OpenAI API keys for authentication. Required
+                for RankGPT.
+            openai_key_start_id: Starting index for OpenAI key rotation.
+                Defaults to None.
+            openai_proxy: Proxy configuration for OpenAI API. Defaults to
+                None.
+            api_type: API type for Azure AI services. Defaults to None.
+            api_base: API base URL for Azure AI services. Defaults to None.
+            api_version: API version for Azure AI services. Defaults to None.
         """
         self.model_path = model_path
         self.ranker_type = ranker_type
@@ -124,15 +140,16 @@ class ListwiseLLMRanker:
                 api_version=self.api_version,
             )
 
-    @weave.op()
     @component.output_types(documents=list[Document])
-    def run(self, query: str, documents: list[Document], top_k: int | None = None) -> dict:
+    def run(
+        self, query: str, documents: list[Document], top_k: int | None = None
+    ) -> dict:
         """Rerank documents based on query relevance using the configured LLM.
 
         Args:
-            query (str): Search query to rank documents against
-            documents (list[Document]): List of Haystack Document objects to rerank
-            top_k (Optional[int]): Number of top documents to return. Returns all if None.
+            query: Search query to rank documents against
+            documents: List of Haystack Document objects to rerank
+            top_k: Number of top documents to return. Returns all if None.
 
         Returns:
             dict: Dictionary with key "documents" containing reranked Document objects
@@ -148,12 +165,15 @@ class ListwiseLLMRanker:
         rerank_request = Request(
             query=Query(query, qid=1),
             candidates=[
-                Candidate(doc={"text": document.content}, docid=document.id, score=1) for document in documents
+                Candidate(doc={"text": document.content}, docid=document.id, score=1)
+                for document in documents
             ],
         )
 
         rerank_results = self.reranker.rerank(
-            request=rerank_request, rank_end=len(documents), step=self.sliding_window_step
+            request=rerank_request,
+            rank_end=len(documents),
+            step=self.sliding_window_step,
         )
 
         final_results = []
@@ -161,7 +181,9 @@ class ListwiseLLMRanker:
             original_document = document_id_to_document_map.get(candidate.docid)
             if original_document:
                 document_copy = Document(
-                    content=original_document.content, meta=deepcopy(original_document.meta), score=candidate.score
+                    content=original_document.content,
+                    meta=deepcopy(original_document.meta),
+                    score=candidate.score,
                 )
                 final_results.append(document_copy)
 

@@ -1,3 +1,5 @@
+"""Tests for the listwise ranker."""
+
 from unittest.mock import Mock, patch
 
 import pytest
@@ -27,9 +29,13 @@ def documents() -> list[Document]:
     """Generate a list of test documents with metadata.
 
     Returns:
-        List[Document]: List of Haystack Document objects with incremental content and order metadata
+        List[Document]: List of Haystack Document objects with incremental
+            content and order metadata.
     """
-    return [Document(content=f"Document {i}", id=f"doc_{i}", meta={"order": i}) for i in range(5)]
+    return [
+        Document(content=f"Document {i}", id=f"doc_{i}", meta={"order": i})
+        for i in range(5)
+    ]
 
 
 @pytest.fixture
@@ -43,7 +49,9 @@ def mock_rerank(mocker: MockerFixture) -> Mock:
         Mock: Mock object patching the rerank method
     """
 
-    def _mock(ranker: ListwiseLLMRanker, return_value: list[Candidate] | None = None) -> Mock:
+    def _mock(
+        ranker: ListwiseLLMRanker, return_value: list[Candidate] | None = None
+    ) -> Mock:
         mock = mocker.patch.object(ranker.reranker, "rerank")
         mock.return_value = return_value if return_value is not None else []
         return mock
@@ -55,8 +63,13 @@ class TestListwiseLLMRanker:
     """Test suite for validating the ListwiseLLMRanker component functionality."""
 
     @patch("torch.cuda.is_available", return_value=True)
-    @patch("rank_llm.rerank.listwise.zephyr_reranker.ZephyrReranker.__init__", return_value=None)
-    def test_initialization_zephyr(self, mock_rank_zephyr_init: Mock, mock_cuda: Mock) -> None:
+    @patch(
+        "rank_llm.rerank.listwise.zephyr_reranker.ZephyrReranker.__init__",
+        return_value=None,
+    )
+    def test_initialization_zephyr(
+        self, mock_rank_zephyr_init: Mock, mock_cuda: Mock
+    ) -> None:
         """Verify correct initialization with Zephyr reranker configuration.
 
         Args:
@@ -95,8 +108,13 @@ class TestListwiseLLMRanker:
         assert rank_zephyr.api_version is None
 
     @patch("torch.cuda.is_available", return_value=True)
-    @patch("rank_llm.rerank.listwise.vicuna_reranker.VicunaReranker.__init__", return_value=None)
-    def test_initialization_vicuna(self, mock_vicuna_init: Mock, mock_cuda: Mock) -> None:
+    @patch(
+        "rank_llm.rerank.listwise.vicuna_reranker.VicunaReranker.__init__",
+        return_value=None,
+    )
+    def test_initialization_vicuna(
+        self, mock_vicuna_init: Mock, mock_cuda: Mock
+    ) -> None:
         """Validate proper initialization with Vicuna reranker setup.
 
         Args:
@@ -136,7 +154,9 @@ class TestListwiseLLMRanker:
 
     @patch("torch.cuda.is_available", return_value=True)
     @patch("rank_llm.rerank.listwise.rank_gpt.SafeOpenai.__init__", return_value=None)
-    def test_initialization_rank_gpt(self, mock_rank_gpt_init: Mock, mock_cuda: Mock) -> None:
+    def test_initialization_rank_gpt(
+        self, mock_rank_gpt_init: Mock, mock_cuda: Mock
+    ) -> None:
         """Test successful initialization with RankGPT configuration using API keys.
 
         Args:
@@ -144,7 +164,11 @@ class TestListwiseLLMRanker:
             mock_cuda: Mock for CUDA availability check
         """
         test_api_keys = ["dummy_key"]
-        rank_gpt = ListwiseLLMRanker(ranker_type="rank_gpt", model_path="gpt-4o-mini", openai_api_keys=test_api_keys)
+        rank_gpt = ListwiseLLMRanker(
+            ranker_type="rank_gpt",
+            model_path="gpt-4o-mini",
+            openai_api_keys=test_api_keys,
+        )
 
         assert isinstance(rank_gpt.reranker, RankGPT)
         assert rank_gpt.model_path == "gpt-4o-mini"
@@ -169,8 +193,13 @@ class TestListwiseLLMRanker:
         assert rank_gpt.api_version is None
 
     @patch("torch.cuda.is_available", return_value=True)
-    @patch("rank_llm.rerank.listwise.zephyr_reranker.ZephyrReranker.__init__", return_value=None)
-    def test_run_with_no_documents_raises_error(self, mock_rank_zephyr_init: Mock, mock_cuda: Mock, query: str) -> None:
+    @patch(
+        "rank_llm.rerank.listwise.zephyr_reranker.ZephyrReranker.__init__",
+        return_value=None,
+    )
+    def test_run_with_no_documents_raises_error(
+        self, mock_rank_zephyr_init: Mock, mock_cuda: Mock, query: str
+    ) -> None:
         """Ensure ValueError is raised when no documents are provided for reranking.
 
         Args:
@@ -179,15 +208,25 @@ class TestListwiseLLMRanker:
             query: Test query fixture
         """
         empty_doc_ranker = ListwiseLLMRanker(
-            model_path="castorini/rank_zephyr_7b_v1_full", ranker_type="zephyr", context_size=4096
+            model_path="castorini/rank_zephyr_7b_v1_full",
+            ranker_type="zephyr",
+            context_size=4096,
         )
         with pytest.raises(ValueError, match="No documents provided for reranking"):
             empty_doc_ranker.run(query=query, documents=[])
 
     @patch("torch.cuda.is_available", return_value=True)
-    @patch("rank_llm.rerank.listwise.zephyr_reranker.ZephyrReranker.__init__", return_value=None)
+    @patch(
+        "rank_llm.rerank.listwise.zephyr_reranker.ZephyrReranker.__init__",
+        return_value=None,
+    )
     def test_run_returns_correct_order(
-        self, mock_rank_zephyr_init: Mock, mock_cuda: Mock, mocker: MockerFixture, query: str, documents: list[Document]
+        self,
+        mock_rank_zephyr_init: Mock,
+        mock_cuda: Mock,
+        mocker: MockerFixture,
+        query: str,
+        documents: list[Document],
     ) -> None:
         """Validate document ordering matches mock reranker's output sequence.
 
@@ -218,9 +257,17 @@ class TestListwiseLLMRanker:
         ]
 
     @patch("torch.cuda.is_available", return_value=True)
-    @patch("rank_llm.rerank.listwise.zephyr_reranker.ZephyrReranker.__init__", return_value=None)
+    @patch(
+        "rank_llm.rerank.listwise.zephyr_reranker.ZephyrReranker.__init__",
+        return_value=None,
+    )
     def test_run_applies_top_k(
-        self, mock_rank_zephyr_init: Mock, mock_cuda: Mock, mocker: MockerFixture, query: str, documents: list[Document]
+        self,
+        mock_rank_zephyr_init: Mock,
+        mock_cuda: Mock,
+        mocker: MockerFixture,
+        query: str,
+        documents: list[Document],
     ) -> None:
         """Verify top_k parameter correctly limits returned results count.
 
@@ -244,12 +291,24 @@ class TestListwiseLLMRanker:
         top_k = 3
         top_k_results = rank_zephyr.run(query=query, documents=documents, top_k=top_k)
         assert len(top_k_results["documents"]) == top_k
-        assert [doc.content for doc in top_k_results["documents"]] == ["Document 2", "Document 0", "Document 1"]
+        assert [doc.content for doc in top_k_results["documents"]] == [
+            "Document 2",
+            "Document 0",
+            "Document 1",
+        ]
 
     @patch("torch.cuda.is_available", return_value=True)
-    @patch("rank_llm.rerank.listwise.zephyr_reranker.ZephyrReranker.__init__", return_value=None)
+    @patch(
+        "rank_llm.rerank.listwise.zephyr_reranker.ZephyrReranker.__init__",
+        return_value=None,
+    )
     def test_run_preserves_metadata(
-        self, mock_rank_zephyr_init: Mock, mock_cuda: Mock, mocker: MockerFixture, query: str, documents: list[Document]
+        self,
+        mock_rank_zephyr_init: Mock,
+        mock_cuda: Mock,
+        mocker: MockerFixture,
+        query: str,
+        documents: list[Document],
     ) -> None:
         """Ensure document metadata remains unchanged after reranking process.
 
@@ -262,17 +321,29 @@ class TestListwiseLLMRanker:
         """
         rank_zephyr = ListwiseLLMRanker(ranker_type="zephyr")
         mock_rerank = mocker.patch.object(rank_zephyr.reranker, "rerank")
-        mock_rerank.return_value = [Candidate(doc={"text": doc.content}, docid=doc.id, score=1) for doc in documents]
+        mock_rerank.return_value = [
+            Candidate(doc={"text": doc.content}, docid=doc.id, score=1)
+            for doc in documents
+        ]
 
         reranked_documents = rank_zephyr.run(query=query, documents=documents)
-        for original_doc, reranked_doc in zip(documents, reranked_documents["documents"], strict=False):
+        for original_doc, reranked_doc in zip(
+            documents, reranked_documents["documents"], strict=False
+        ):
             assert original_doc.meta == reranked_doc.meta
             assert original_doc.content == reranked_doc.content
 
     @patch("torch.cuda.is_available", return_value=True)
-    @patch("rank_llm.rerank.listwise.zephyr_reranker.ZephyrReranker.__init__", return_value=None)
+    @patch(
+        "rank_llm.rerank.listwise.zephyr_reranker.ZephyrReranker.__init__",
+        return_value=None,
+    )
     def test_run_deepcopies_metadata(
-        self, mock_rank_zephyr_init: Mock, mock_cuda: Mock, mocker: MockerFixture, query: str
+        self,
+        mock_rank_zephyr_init: Mock,
+        mock_cuda: Mock,
+        mocker: MockerFixture,
+        query: str,
     ) -> None:
         """Validate metadata deepcopy prevents original document modification.
 
@@ -285,14 +356,19 @@ class TestListwiseLLMRanker:
         original_doc = Document(content="test", meta={"key": "original"})
         rank_zephyr = ListwiseLLMRanker(ranker_type="zephyr")
         mock_rerank = mocker.patch.object(rank_zephyr.reranker, "rerank")
-        mock_rerank.return_value = [Candidate(doc={"text": "test"}, docid=original_doc.id, score=1)]
+        mock_rerank.return_value = [
+            Candidate(doc={"text": "test"}, docid=original_doc.id, score=1)
+        ]
 
         modified_results = rank_zephyr.run(query=query, documents=[original_doc])
         modified_results["documents"][0].meta["key"] = "modified"
         assert original_doc.meta["key"] == "original"
 
     @patch("torch.cuda.is_available", return_value=True)
-    @patch("rank_llm.rerank.listwise.zephyr_reranker.ZephyrReranker.__init__", return_value=None)
+    @patch(
+        "rank_llm.rerank.listwise.zephyr_reranker.ZephyrReranker.__init__",
+        return_value=None,
+    )
     def test_sliding_window_params_passed(
         self, mock_rank_zephyr_init: Mock, mock_cuda: Mock, mocker: MockerFixture
     ) -> None:
@@ -306,19 +382,27 @@ class TestListwiseLLMRanker:
         test_window_size = 30
         test_window_step = 15
         mock_rank_zephyr = mocker.patch(
-            "rank_llm.rerank.listwise.zephyr_reranker.ZephyrReranker.__init__", return_value=None
+            "rank_llm.rerank.listwise.zephyr_reranker.ZephyrReranker.__init__",
+            return_value=None,
         )
 
         ListwiseLLMRanker(
-            ranker_type="zephyr", sliding_window_size=test_window_size, sliding_window_step=test_window_step
+            ranker_type="zephyr",
+            sliding_window_size=test_window_size,
+            sliding_window_step=test_window_step,
         )
 
         _, constructor_kwargs = mock_rank_zephyr.call_args
         assert constructor_kwargs["window_size"] == test_window_size
 
     @patch("torch.cuda.is_available", return_value=True)
-    @patch("rank_llm.rerank.listwise.zephyr_reranker.ZephyrReranker.__init__", return_value=None)
-    def test_system_message_passed(self, mock_rank_zephyr_init: Mock, mock_cuda: Mock, mocker: MockerFixture) -> None:
+    @patch(
+        "rank_llm.rerank.listwise.zephyr_reranker.ZephyrReranker.__init__",
+        return_value=None,
+    )
+    def test_system_message_passed(
+        self, mock_rank_zephyr_init: Mock, mock_cuda: Mock, mocker: MockerFixture
+    ) -> None:
         """Ensure custom system messages are properly forwarded to reranker.
 
         Args:
@@ -328,7 +412,8 @@ class TestListwiseLLMRanker:
         """
         custom_system_message = "Custom system message"
         mock_rank_zephyr = mocker.patch(
-            "rank_llm.rerank.listwise.zephyr_reranker.ZephyrReranker.__init__", return_value=None
+            "rank_llm.rerank.listwise.zephyr_reranker.ZephyrReranker.__init__",
+            return_value=None,
         )
 
         ListwiseLLMRanker(ranker_type="zephyr", system_message=custom_system_message)
@@ -337,7 +422,10 @@ class TestListwiseLLMRanker:
         assert constructor_kwargs["system_message"] == custom_system_message
 
     @patch("torch.cuda.is_available", return_value=True)
-    @patch("rank_llm.rerank.listwise.zephyr_reranker.ZephyrReranker.__init__", return_value=None)
+    @patch(
+        "rank_llm.rerank.listwise.zephyr_reranker.ZephyrReranker.__init__",
+        return_value=None,
+    )
     def test_variable_passages_passed(
         self, mock_rank_zephyr_init: Mock, mock_cuda: Mock, mocker: MockerFixture
     ) -> None:
@@ -350,10 +438,13 @@ class TestListwiseLLMRanker:
         """
         variable_passages_flag = True
         mock_rank_zephyr = mocker.patch(
-            "rank_llm.rerank.listwise.zephyr_reranker.ZephyrReranker.__init__", return_value=None
+            "rank_llm.rerank.listwise.zephyr_reranker.ZephyrReranker.__init__",
+            return_value=None,
         )
 
-        ListwiseLLMRanker(ranker_type="zephyr", variable_passages=variable_passages_flag)
+        ListwiseLLMRanker(
+            ranker_type="zephyr", variable_passages=variable_passages_flag
+        )
 
         _, constructor_kwargs = mock_rank_zephyr.call_args
         assert constructor_kwargs["variable_passages"] == variable_passages_flag

@@ -1,3 +1,5 @@
+"""Tests for the pairwise ranker."""
+
 import copy
 from unittest.mock import patch
 
@@ -19,7 +21,9 @@ class DummyPairwiseGeneration:
             "tie": PairwiseRankingOutput(selected_passage="A"),  # Mock tie handling
         }
 
-    def generate(self, output_format: str, user_prompt: str, system_prompt: str) -> PairwiseRankingOutput:
+    def generate(
+        self, output_format: str, user_prompt: str, system_prompt: str
+    ) -> PairwiseRankingOutput:
         """Mock generate method with controlled responses based on the user prompt.
 
         Args:
@@ -32,7 +36,7 @@ class DummyPairwiseGeneration:
         """
         if "Passage A: A" in user_prompt and "Passage B: B" in user_prompt:
             return self.responses["A"]
-        elif "Passage A: B" in user_prompt and "Passage B: A" in user_prompt:
+        if "Passage A: B" in user_prompt and "Passage B: A" in user_prompt:
             return self.responses["B"]
         return self.responses["tie"]
 
@@ -40,33 +44,36 @@ class DummyPairwiseGeneration:
 @pytest.fixture(autouse=True)
 def patch_structured_generation() -> None:
     """Fixture to patch StructuredGeneration with DummyPairwiseGeneration."""
-    with patch("rankers.pairwise.pairwise_ranker.StructuredGeneration", DummyPairwiseGeneration):
+    with patch(
+        "rankers.pairwise.pairwise_ranker.StructuredGeneration", DummyPairwiseGeneration
+    ):
         yield
-
-
-@pytest.fixture
-def test_documents() -> list[Document]:
-    """Fixture providing a list of test documents."""
-    return [Document(id="A", content="A"), Document(id="B", content="B"), Document(id="C", content="C")]
-
-
-@pytest.fixture
-def test_query() -> str:
-    """Fixture providing a test query string."""
-    return "test query"
-
-
-@pytest.fixture
-def pairwise_ranker() -> PairwiseLLMRanker:
-    """Fixture providing an initialized PairwiseLLMRanker for testing."""
-    ranker = PairwiseLLMRanker(model_name="test-model", method="allpair", top_k=2)
-    ranker._is_warmed_up = True
-    ranker._generator = DummyPairwiseGeneration()
-    return ranker
 
 
 class TestPairwiseLLMRanker:
     """Test suite for the PairwiseLLMRanker class."""
+
+    @pytest.fixture
+    def test_documents(self) -> list[Document]:
+        """Fixture providing a list of test documents."""
+        return [
+            Document(id="A", content="A"),
+            Document(id="B", content="B"),
+            Document(id="C", content="C"),
+        ]
+
+    @pytest.fixture
+    def test_query(self) -> str:
+        """Fixture providing a test query string."""
+        return "test query"
+
+    @pytest.fixture
+    def pairwise_ranker(self) -> PairwiseLLMRanker:
+        """Fixture providing an initialized PairwiseLLMRanker for testing."""
+        ranker = PairwiseLLMRanker(model_name="test-model", method="allpair", top_k=2)
+        ranker._is_warmed_up = True
+        ranker._generator = DummyPairwiseGeneration()
+        return ranker
 
     def test_initialization(self) -> None:
         """Test that the ranker initializes correctly with provided parameters."""
@@ -87,14 +94,25 @@ class TestPairwiseLLMRanker:
         assert not ranker._is_warmed_up
         assert ranker._generator is None
 
-    def test_warm_up(self, pairwise_ranker: PairwiseLLMRanker) -> None:
-        """Test that the warm_up method initializes the generator correctly."""
-        pairwise_ranker._warm_up()
-        assert pairwise_ranker._is_warmed_up
-        assert isinstance(pairwise_ranker._generator, DummyPairwiseGeneration)
+    def test_warm_up(self) -> None:
+        """Test that _warm_up initializes the generator from a cold start.
+
+        Creates a fresh ranker with _is_warmed_up=False and _generator=None,
+        then calls _warm_up() and verifies the generator is set and the flag is True.
+        """
+        ranker = PairwiseLLMRanker(model_name="test-model")
+        # Confirm cold-start state
+        assert not ranker._is_warmed_up
+        assert ranker._generator is None
+        ranker._warm_up()
+        assert ranker._is_warmed_up
+        assert isinstance(ranker._generator, DummyPairwiseGeneration)
 
     def test_compare_pair_conflict_resolution(
-        self, pairwise_ranker: PairwiseLLMRanker, test_documents: list[Document], test_query: str
+        self,
+        pairwise_ranker: PairwiseLLMRanker,
+        test_documents: list[Document],
+        test_query: str,
     ) -> None:
         """Test conflict resolution in pairwise comparisons."""
         # Test clear A preference
@@ -102,7 +120,9 @@ class TestPairwiseLLMRanker:
             "A": PairwiseRankingOutput(selected_passage="A"),
             "B": PairwiseRankingOutput(selected_passage="B"),
         }
-        result = pairwise_ranker._compare_pair(test_query, test_documents[0], test_documents[1])
+        result = pairwise_ranker._compare_pair(
+            test_query, test_documents[0], test_documents[1]
+        )
         assert result == "A"
 
         # Test clear B preference
@@ -110,7 +130,9 @@ class TestPairwiseLLMRanker:
             "A": PairwiseRankingOutput(selected_passage="B"),
             "B": PairwiseRankingOutput(selected_passage="A"),
         }
-        result = pairwise_ranker._compare_pair(test_query, test_documents[0], test_documents[1])
+        result = pairwise_ranker._compare_pair(
+            test_query, test_documents[0], test_documents[1]
+        )
         assert result == "B"
 
         # Test tie handling
@@ -118,11 +140,16 @@ class TestPairwiseLLMRanker:
             "A": PairwiseRankingOutput(selected_passage="B"),
             "B": PairwiseRankingOutput(selected_passage="B"),
         }
-        result = pairwise_ranker._compare_pair(test_query, test_documents[0], test_documents[1])
+        result = pairwise_ranker._compare_pair(
+            test_query, test_documents[0], test_documents[1]
+        )
         assert result == "tie"
 
     def test_allpair_reranking(
-        self, pairwise_ranker: PairwiseLLMRanker, test_documents: list[Document], test_query: str
+        self,
+        pairwise_ranker: PairwiseLLMRanker,
+        test_documents: list[Document],
+        test_query: str,
     ) -> None:
         """Test reranking using the allpair method."""
         pairwise_ranker.top_k = 2
@@ -135,7 +162,10 @@ class TestPairwiseLLMRanker:
         assert [d.id for d in reranked] == ["A", "C"]
 
     def test_heapsort_reranking(
-        self, pairwise_ranker: PairwiseLLMRanker, test_documents: list[Document], test_query: str
+        self,
+        pairwise_ranker: PairwiseLLMRanker,
+        test_documents: list[Document],
+        test_query: str,
     ) -> None:
         """Test reranking using the heapsort method."""
         pairwise_ranker.method = "heapsort"
@@ -150,7 +180,10 @@ class TestPairwiseLLMRanker:
         assert "A" in [d.id for d in reranked]
 
     def test_bubblesort_reranking(
-        self, pairwise_ranker: PairwiseLLMRanker, test_documents: list[Document], test_query: str
+        self,
+        pairwise_ranker: PairwiseLLMRanker,
+        test_documents: list[Document],
+        test_query: str,
     ) -> None:
         """Test reranking using the bubblesort method."""
         pairwise_ranker.method = "bubblesort"
@@ -165,18 +198,26 @@ class TestPairwiseLLMRanker:
         assert "A" in [d.id for d in reranked]
 
     def test_run_method(
-        self, pairwise_ranker: PairwiseLLMRanker, test_documents: list[Document], test_query: str
+        self,
+        pairwise_ranker: PairwiseLLMRanker,
+        test_documents: list[Document],
+        test_query: str,
     ) -> None:
         """Test the run method with default parameters."""
-        result = pairwise_ranker.run(documents=test_documents, query=test_query, method="allpair", top_k=2)
+        result = pairwise_ranker.run(
+            documents=test_documents, query=test_query, method="allpair", top_k=2
+        )
         assert "documents" in result
         assert len(result["documents"]) == 3  # top_k + remaining
         assert result["documents"][0].id in ["A", "B"]
 
     def test_preserve_original_order(
-        self, pairwise_ranker: PairwiseLLMRanker, test_documents: list[Document], test_query: str
+        self,
+        pairwise_ranker: PairwiseLLMRanker,
+        test_documents: list[Document],
+        test_query: str,
     ) -> None:
-        """Test that the original order of documents is preserved for non-top_k documents."""
+        """Test original order preserved for non-top_k documents."""
         pairwise_ranker.top_k = 2
         result = pairwise_ranker.run(documents=test_documents, query=test_query)
         remaining = [d for d in result["documents"] if d.id not in {"A", "B"}]
@@ -184,36 +225,98 @@ class TestPairwiseLLMRanker:
 
     @pytest.mark.parametrize("invalid_method", ["invalid", "mergesort"])
     def test_invalid_method_handling(
-        self, invalid_method: str, pairwise_ranker: PairwiseLLMRanker, test_documents: list[Document], test_query: str
+        self,
+        invalid_method: str,
+        pairwise_ranker: PairwiseLLMRanker,
+        test_documents: list[Document],
+        test_query: str,
     ) -> None:
         """Test that an invalid method raises a ValueError."""
         with pytest.raises(ValueError):
-            pairwise_ranker.run(documents=test_documents, query=test_query, method=invalid_method)
+            pairwise_ranker.run(
+                documents=test_documents, query=test_query, method=invalid_method
+            )
 
     def test_top_k_handling(
-        self, pairwise_ranker: PairwiseLLMRanker, test_documents: list[Document], test_query: str
+        self,
+        pairwise_ranker: PairwiseLLMRanker,
+        test_documents: list[Document],
+        test_query: str,
     ) -> None:
         """Test handling when top_k is set to 0."""
         pairwise_ranker.top_k = 0
         result = pairwise_ranker.run(documents=test_documents, query=test_query)
         assert result["documents"] == []
 
-    def test_empty_documents_handling(self, pairwise_ranker: PairwiseLLMRanker, test_query: str) -> None:
+    def test_empty_documents_handling(
+        self, pairwise_ranker: PairwiseLLMRanker, test_query: str
+    ) -> None:
         """Test handling when an empty list of documents is provided."""
         result = pairwise_ranker.run(documents=[], query=test_query)
         assert result["documents"] == []
 
     def test_runtime_parameter_override(
-        self, pairwise_ranker: PairwiseLLMRanker, test_documents: list[Document], test_query: str
+        self,
+        pairwise_ranker: PairwiseLLMRanker,
+        test_documents: list[Document],
+        test_query: str,
     ) -> None:
         """Test that runtime parameters override the initial settings."""
-        result = pairwise_ranker.run(documents=test_documents, query=test_query, method="bubblesort", top_k=1)
+        result = pairwise_ranker.run(
+            documents=test_documents, query=test_query, method="bubblesort", top_k=1
+        )
         assert len(result["documents"]) == 3  # Original 3 docs
         assert pairwise_ranker.method == "bubblesort"
         assert pairwise_ranker.top_k == 1
 
+    def test_allpair_reranking_with_tie_scores(
+        self,
+        pairwise_ranker: PairwiseLLMRanker,
+        test_documents: list[Document],
+        test_query: str,
+    ) -> None:
+        """Test tie scores (0.5 each) accumulated correctly in allpair reranking."""
+        # Both orderings return "A", making _compare_pair return "tie".
+        pairwise_ranker.top_k = 3
+        pairwise_ranker._generator.responses = {
+            "A": PairwiseRankingOutput(selected_passage="A"),
+            "B": PairwiseRankingOutput(selected_passage="A"),
+            "tie": PairwiseRankingOutput(selected_passage="A"),
+        }
+        reranked = pairwise_ranker._allpair_rerank(test_query, test_documents)
+        assert len(reranked) == 3
+
+    def test_run_method_heapsort(
+        self,
+        pairwise_ranker: PairwiseLLMRanker,
+        test_documents: list[Document],
+        test_query: str,
+    ) -> None:
+        """Test the run method dispatches correctly to heapsort reranking."""
+        result = pairwise_ranker.run(
+            documents=test_documents, query=test_query, method="heapsort", top_k=2
+        )
+        assert "documents" in result
+        assert len(result["documents"]) == 3
+
+    def test_run_method_bubblesort(
+        self,
+        pairwise_ranker: PairwiseLLMRanker,
+        test_documents: list[Document],
+        test_query: str,
+    ) -> None:
+        """Test the run method dispatches correctly to bubblesort reranking."""
+        result = pairwise_ranker.run(
+            documents=test_documents, query=test_query, method="bubblesort", top_k=2
+        )
+        assert "documents" in result
+        assert len(result["documents"]) == 3
+
     def test_document_immutability(
-        self, pairwise_ranker: PairwiseLLMRanker, test_documents: list[Document], test_query: str
+        self,
+        pairwise_ranker: PairwiseLLMRanker,
+        test_documents: list[Document],
+        test_query: str,
     ) -> None:
         """Test that the original documents are not modified during reranking."""
         original_docs = copy.deepcopy(test_documents)

@@ -1,10 +1,11 @@
+"""Pairwise LLM reranking component for Haystack."""
+
 # This implementation is based on the Pairwise Ranker from https://github.com/ielab/llm-rankers/blob/main/llmrankers/pairwise.py
 
 from collections import defaultdict
 from copy import deepcopy
 from itertools import combinations
 
-import weave
 from haystack import Document, component
 from transformers import PreTrainedModel, PreTrainedTokenizer
 
@@ -17,8 +18,9 @@ from rankers.utils import StructuredGeneration
 class PairwiseLLMRanker:
     """Pairwise LLM Ranker using structured generation for document comparisons.
 
-    This class implements a pairwise ranking algorithm using a Large Language Model (LLM)
-    to compare documents in pairs and determine their relevance ranking for a given query.
+    This class implements a pairwise ranking algorithm using a Large Language Model
+    (LLM) to compare documents in pairs and determine their relevance ranking for a
+    given query.
 
     Attributes:
         model_name: The name of the LLM model to use.
@@ -53,8 +55,8 @@ class PairwiseLLMRanker:
                 Defaults to None.
             model_class: The class of the model to use. Defaults to None.
             tokenizer_class: The class of the tokenizer to use. Defaults to None.
-            method: The ranking method to use. One of 'allpair', 'heapsort', 'bubblesort'.
-                Defaults to 'allpair'.
+            method: The ranking method to use. One of 'allpair', 'heapsort',
+                'bubblesort'. Defaults to 'allpair'.
             top_k: The number of top documents to return. Defaults to 10.
         """
         self.model_name = model_name
@@ -90,19 +92,24 @@ class PairwiseLLMRanker:
             doc_b: The second document to compare.
 
         Returns:
-            str: 'A' if doc_a is more relevant, 'B' if doc_b is more relevant, or 'tie' if they are equal.
+            str: 'A' if doc_a is more relevant, 'B' if doc_b is more relevant,
+                or 'tie' if they are equal.
 
         Raises:
             ValueError: If the result is not one of 'A', 'B', or 'tie'.
         """
         # Original order comparison
-        prompt_ab = USER_PROMPT.format(query=query, doc_a=doc_a.content, doc_b=doc_b.content)
+        prompt_ab = USER_PROMPT.format(
+            query=query, doc_a=doc_a.content, doc_b=doc_b.content
+        )
         result_ab = self._generator.generate(
             PairwiseRankingOutput, user_prompt=prompt_ab, system_prompt=SYSTEM_PROMPT
         ).selected_passage.upper()
 
         # Reverse order comparison
-        prompt_ba = USER_PROMPT.format(query=query, doc_a=doc_b.content, doc_b=doc_a.content)
+        prompt_ba = USER_PROMPT.format(
+            query=query, doc_a=doc_b.content, doc_b=doc_a.content
+        )
         result_ba = self._generator.generate(
             PairwiseRankingOutput, user_prompt=prompt_ba, system_prompt=SYSTEM_PROMPT
         ).selected_passage.upper()
@@ -110,7 +117,7 @@ class PairwiseLLMRanker:
         # Resolve conflicts
         if result_ab == "A" and result_ba == "B":
             return "A"
-        elif result_ab == "B" and result_ba == "A":
+        if result_ab == "B" and result_ba == "A":
             return "B"
         return "tie"  # Handle ties and invalid responses
 
@@ -122,11 +129,13 @@ class PairwiseLLMRanker:
             docs: The list of documents to re-rank.
 
         Returns:
-            List[Document]: The top_k documents sorted by their pairwise comparison scores.
+            List[Document]: The top_k documents sorted by their pairwise comparison
+                scores.
 
         Note:
-            This method compares all possible pairs of documents and computes a score for each document
-            based on the number of times it is selected as more relevant than another document.
+            This method compares all possible pairs of documents and computes a score
+            for each document based on the number of times it is selected as more
+            relevant than another document.
         """
         scores = defaultdict(float)
         for doc1, doc2 in combinations(docs, 2):
@@ -142,12 +151,13 @@ class PairwiseLLMRanker:
         return sorted(docs, key=lambda d: scores[d.id], reverse=True)[: self.top_k]
 
     def _heapify(self, array: list[Document], query: str, root: int, size: int) -> None:
-        """Maintains the max-heap property by ensuring the parent node is larger than its children.
+        """Maintain max-heap property by ensuring parent node is larger than children.
 
-        This function is used in the heap-sort algorithm to re-rank documents based on pairwise
-        comparisons. It starts from a given root index and ensures that the subtree rooted at this
-        index satisfies the max-heap property. If a child node is found to be larger than the parent,
-        they are swapped, and the function is called recursively on the affected subtree.
+        This function is used in the heap-sort algorithm to re-rank documents based on
+        pairwise comparisons. It starts from a given root index and ensures that the
+        subtree rooted at this index satisfies the max-heap property. If a child node is
+        found to be larger than the parent, they are swapped, and the function is called
+        recursively on the affected subtree.
 
         Args:
             array: The list of documents being re-ranked.
@@ -163,12 +173,16 @@ class PairwiseLLMRanker:
         right_child = 2 * root + 2
 
         if left_child < size:
-            comparison_result = self._compare_pair(query, array[left_child], array[current_largest])
+            comparison_result = self._compare_pair(
+                query, array[left_child], array[current_largest]
+            )
             if comparison_result == "A":
                 current_largest = left_child
 
         if right_child < size:
-            comparison_result = self._compare_pair(query, array[right_child], array[current_largest])
+            comparison_result = self._compare_pair(
+                query, array[right_child], array[current_largest]
+            )
             if comparison_result == "A":
                 current_largest = right_child
 
@@ -196,14 +210,15 @@ class PairwiseLLMRanker:
         return list(reversed(array))[: self.top_k]
 
     def _bubblesort_rerank(self, query: str, docs: list[Document]) -> list[Document]:
-        """Re-rank documents using an optimized bubble-sort inspired pairwise comparison method.
+        """Re-rank documents using optimized bubble-sort inspired pairwise comparison.
 
         Args:
             query: The query string used for comparison.
             docs: The list of documents to re-rank.
 
         Returns:
-            List[Document]: The top_k documents sorted using an optimized bubble-sort approach.
+            List[Document]: The top_k documents sorted using an optimized
+                bubble-sort approach.
         """
         ranking = deepcopy(docs)
         n = len(ranking)
@@ -223,7 +238,10 @@ class PairwiseLLMRanker:
                 result = self._compare_pair(query, doc1, doc2)
 
                 if result == "B":  # If doc2 should come after doc1
-                    ranking[current_ind - 1], ranking[current_ind] = ranking[current_ind], ranking[current_ind - 1]
+                    ranking[current_ind - 1], ranking[current_ind] = (
+                        ranking[current_ind],
+                        ranking[current_ind - 1],
+                    )
                     if not is_change:
                         is_change = True
                         if last_end != n - 1:  # Skip unchanged pairs at the bottom
@@ -238,7 +256,6 @@ class PairwiseLLMRanker:
 
         return ranking[:k]
 
-    @weave.op
     @component.output_types(documents=list[Document])
     def run(
         self,
@@ -252,8 +269,8 @@ class PairwiseLLMRanker:
         Args:
             documents: The list of documents to rank.
             query: The query string used for ranking.
-            method: The ranking method to use. One of 'allpair', 'heapsort', 'bubblesort'.
-                Defaults to the class's method.
+            method: The ranking method to use. One of 'allpair', 'heapsort',
+                'bubblesort'. Defaults to the class's method.
             top_k: The number of top documents to return. Defaults to the class's top_k.
 
         Returns:
