@@ -60,6 +60,7 @@ override-dependencies = [
   "multiprocess>=0.70.19",
   "dill>=0.4.1",
   "chardet>=3.0.2,<6",
+  "pyjnius!=1.8.0",
 ]
 
 
